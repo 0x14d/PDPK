@@ -9,7 +9,7 @@ from data_provider.synthetic_data_generation.types.pq_function import (
     GeneratedPQFunctions,
     PQFunction,
 )
-from rule_base.rule import Rule
+from utils.rule import Rule
 from data_provider.synthetic_data_generation.types.pq_tuple import PQTuple
 from data_provider.synthetic_data_generation.config.sdg_config import SdgConfig
 

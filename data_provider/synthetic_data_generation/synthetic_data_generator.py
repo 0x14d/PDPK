@@ -31,6 +31,7 @@ from data_provider.synthetic_data_generation.types.generator_arguments  \
 from data_provider.synthetic_data_generation.types.pq_function import GeneratedPQFunctions
 from data_provider.synthetic_data_generation.types.pq_tuple import GeneratedPQTuples
 from data_provider.knowledge_graphs.pq_relation import PQ_Relation
+from utils.rdf_graph import RDFGraph
 
 
 class SyntheticDataGenerator:
@@ -173,6 +174,23 @@ class SyntheticDataGenerator:
         graph.add((dataset, VOID.entities, entities))
 
         return graph
+    
+    def get_knowledge_graph_as_rdf(self, use_literals: bool=False) -> rdflib.Graph:
+        """
+        Returns the knowledge graph in rdf format
+        
+        Parameters:
+            - use_literals (bool, default: False): Include literls in graph?
+        
+        Returns:
+            knowledge graph in rdf format (rdflib.Graph)
+        """
+        rdf = RDFGraph(
+            edges=self.knowledge_graph.get_edge_dataframe(),
+            metadata=self.knowledge_graph.get_vertex_dataframe(),
+            literal_graph=use_literals
+        )
+        return rdf.graph
 
     def create_new_knowledge_graph(self) -> igraph.Graph:
         """
