@@ -123,7 +123,7 @@ class AbstractKnowledgeGraphGeneratorConfig(BaseModel, ABC):
 
 class BasicKnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
     """
-    Configuration of the `BasicPQTupleGenerator`
+    Configuration of the `BasicKnowledgeGraphGenerator`
     """
     type: Literal[KnowledgeGraphGeneratorType.BASIC] = KnowledgeGraphGeneratorType.BASIC
 

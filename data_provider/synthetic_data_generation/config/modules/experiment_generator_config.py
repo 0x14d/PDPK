@@ -113,6 +113,7 @@ class SingleTypeExperimentGeneratorConfig(AbstractExperimentGeneratorConfig):
         = ExperimentGeneratorType.SINGLE_TYPE
 
     experiment_series: Optional[ExperimentSeriesGeneratorConfig]
+    """The experiment series generator used to generate the experiment series"""
 
     @validator('experiment_series', always=True)
     def parse_experiment_series(cls, experiment_series):
@@ -132,6 +133,10 @@ class MultiTypeExperimentGeneratorConfig(AbstractExperimentGeneratorConfig):
         = ExperimentGeneratorType.MULTI_TYPE
 
     experiment_series: Optional[Dict[float, ExperimentSeriesGeneratorConfig]]
+    """
+    Mapping between the used experiment series generators and the
+    proportion of the dataset the generated experiment series should cover.
+    """
 
     @validator('experiment_series', always=True)
     def parse_experiment_series(

@@ -30,9 +30,6 @@ class TrialExperimentSeriesGenerator(ExperimentSeriesGenerator):
     def __init__(self, args: ExperimentSeriesGeneratorArguments) -> None:
         super().__init__(args)
 
-        if self._config.override_expert_knowledge:
-            self._pq_tuples.expert_knowledge = []
-
     def generate_all_experiment_series(self) -> List[GeneratedExperimentSeries]:
         """
         Generates an experiment series for every quality with testing parametrizations.
@@ -88,16 +85,6 @@ class TrialExperimentSeriesGenerator(ExperimentSeriesGenerator):
                 )
             raise NotImplementedError('No implementation for parameter adjustment method {method}!')
 
-        def add_expert_knowledge(
-            old_experiment: GeneratedExperiment,
-            new_experiment: GeneratedExperiment,
-            parameter: str
-        ):
-            for quality in self._pq_tuples.selected_qualities:
-                if old_experiment.qualities[quality] != new_experiment.qualities[quality] \
-                   and (parameter, quality) not in self._pq_tuples.expert_knowledge:
-                    self._pq_tuples.expert_knowledge.append((parameter, quality))
-
         def explore_direction(
             parameter: str,
             base_experiment: GeneratedExperiment,
@@ -131,9 +118,6 @@ class TrialExperimentSeriesGenerator(ExperimentSeriesGenerator):
                 new_experiments.append(new_experiment)
 
                 new_experiment_score = self._calculate_quality_score(new_parameters, qualities)
-
-                if self._config.override_expert_knowledge:
-                    add_expert_knowledge(last_experiment, new_experiment, parameter)
 
                 if new_experiment_score >= last_experiment_score:
                     # End if score didn't improve

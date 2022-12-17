@@ -73,7 +73,7 @@ class SingleComplexityPQFunctionGeneratorConfig(AbstractPQFunctionGeneratorConfi
         = PQFunctionGeneratorType.SINGLE_COMPLEXITY
 
     pq_function: Optional[PQFunctionConfig]
-    """..."""
+    """The pq-function used to modell the parameter-quality-correlations"""
 
     seed: int = 42
     """Seed of the random number generator"""
