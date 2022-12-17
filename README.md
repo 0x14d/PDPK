@@ -332,7 +332,7 @@ All these classes are located in `data_provider/synthetic_data_generation/types/
 | Returns [`pd.DataFrame`](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html): Dataset as dataframe  |
 
 | `def to_csv(self, path: str          | None) -> str                                                                                             | None` |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------- | ----- |
+| -------- |
 | Converts the dataset to csv format.  |
 | Parameters: <br> <ul> <li>`path (str | None)`: Path where the csv file gets saved to. If None the csv string will be returned instead</li></ul> |
 | Returns `str                         | None`: Csv string if path is `None`, else `None`                                                         |
