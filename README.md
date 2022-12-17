@@ -176,7 +176,7 @@ The `BasicPQTupleGenerator` can be configured with the following attributes:
 | `num_parameters` | `int` |Use all parameters| Number of process parameters that should be used to generate pq-tuples. |
 | `num_qualities` | `int` |Use all qualities| Number of quality features that should be used to generate pq-tuples. |
 |`min_qualities_per_parameter`|`int`|`1`|Minimum number of quality features a process parameter can influence.|
-|`max_qualities_per_parameter`|`int | None`|`None`|Maximum number of quality features a process parameter can influence. If `None` there will be no maximum limit.|
+|`max_qualities_per_parameter`|`int` or `None`|`None`|Maximum number of quality features a process parameter can influence. If `None` there will be no maximum limit.|
 |`pq_correlation_share`|`float`|`0.1`|Proportion of the pq-tuples that should correlate to each other.|
 |`seed`|`int`|`42`|Seed used for the random number generator.|
 
@@ -191,7 +191,7 @@ All pq-functions can only be configured by the `coeffs` attribute. If provided i
 The `SingleComplexityPQFunctionGenerator` can be configured with the following attributes:
 | Attribute | Type |Default| Description |
 | ----------- | ------- |-| ------------------------------------- |
-|`pq_function`| `PQFunctionConfig | None`|Linear complexity|The pq-function used to modell the parameter-quality-correlations.|.
+|`pq_function`| `PQFunctionConfig` or `None`|Linear complexity|The pq-function used to modell the parameter-quality-correlations.|.
 |`seed`|`int`|`42`| Seed used for the random number generator.|
 
 ##### Experiment Series Generator
@@ -242,14 +242,14 @@ All experiment generators can be configured with the following attributes:
 The `SingleTypeExperimentGenerator` can be configured with the following attributes:
 | Attribute | Type |Default| Description |
 | ----------- | ------- |-| ------------------------------------- |
-|`experiment_series`|`ExperimentSeriesGeneratorConfig | None`|`None`|The experiment series generator used to generate the parametrization processes. If `None` the `ExpertKnowledgeExperimentSeriesGenerator` with default values is used.|
+|`experiment_series`|`ExperimentSeriesGeneratorConfig` or `None`|`None`|The experiment series generator used to generate the parametrization processes. If `None` the `ExpertKnowledgeExperimentSeriesGenerator` with default values is used.|
 
 ###### MultiTypeExperimentGenerator
 
 The `MultiTypeExperimentGenerator` can be configured with the following attributes:
 | Attribute | Type |Default| Description |
 | ----------- | ------- |-| ------------------------------------- |
-|`experiment_series`|`Dict[float, ExperimentSeriesGeneratorConfig] | None`|`None`|Mapping between the used experiment series generators and the proportion of the dataset the generated parametrization processes should cover. If `None` the `ExpertKnowledgeExperimentSeriesGenerator` with default values is used for the whole dataset.|
+|`experiment_series`|`Dict[float, ExperimentSeriesGeneratorConfig]` or `None`|`None`|Mapping between the used experiment series generators and the proportion of the dataset the generated parametrization processes should cover. If `None` the `ExpertKnowledgeExperimentSeriesGenerator` with default values is used for the whole dataset.|
 
 ##### Noise Generator
 
@@ -331,11 +331,11 @@ All these classes are located in `data_provider/synthetic_data_generation/types/
 | Converts the dataset to a pandas [`DataFrame`](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html). |
 | Returns [`pd.DataFrame`](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html): Dataset as dataframe  |
 
-| `def to_csv(self, path: str | None) -> str | None` |
-| -------- |
-| Converts the dataset to csv format.  |
-| Parameters: <br> <ul> <li>`path (str | None)`: Path where the csv file gets saved to. If None the csv string will be returned instead</li></ul>|
-| Returns `str | None`: Csv string if path is `None`, else `None`|
+| `def to_csv(self, path: str          or None) -> str                                                                                             or None`                                                                                                             |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Converts the dataset to csv format.                                                                                                                                                                                                                                   |
+| Parameters: <br> <ul> <li>`path (str                                                                                                                      or None)`: Path where the csv file gets saved to. If None the csv string will be returned instead</li></ul> |
+| Returns `str` or `None`: Csv string if path is `None`, else `None`                                                                                                                                                                                                    |
 
 | `def get_all_experiment_series_for_quality(self, quality: str) -> List[GeneratedExperimentSeries]`                           |
 | ---------------------------------------------------------------------------------------------------------------------------- |
