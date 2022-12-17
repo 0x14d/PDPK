@@ -1,0 +1,136 @@
+@prefix ns1: <http://purl.org/pdpk/resource/-> .
+@prefix ppkgdata: <http://purl.org/pdpk/resource/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ppkgdata:blobs a "qual_influence"^^xsd:string ;
+    ppkgdata:23.056214837958475 ppkgdata:support_xy_distance_overhang ;
+    ppkgdata:24.874044232091773 ppkgdata:retraction_retract_speed .
+
+ppkgdata:burning a "qual_influence"^^xsd:string ;
+    ppkgdata:21.56600529806755 ppkgdata:bridge_fan_speed ;
+    ppkgdata:21.952933911537954 ppkgdata:infill_wall_line_count ;
+    ppkgdata:22.095552097550026 ppkgdata:flow_rate_extrusion_offset_factor ;
+    ppkgdata:22.30379704115213 ppkgdata:speed_print ;
+    ppkgdata:22.96435078822292 ppkgdata:material_flow ;
+    ppkgdata:25.005839157695373 ppkgdata:travel_avoid_distance .
+
+ppkgdata:gaps a "qual_influence"^^xsd:string ;
+    ns1:23.05280203118747 ppkgdata:speed_travel_layer_0 ;
+    ns1:23.643809854481418 ppkgdata:retraction_min_travel .
+
+ppkgdata:layer_misalignment a "qual_influence"^^xsd:string ;
+    ppkgdata:22.5821348407267 ppkgdata:wall_line_count ;
+    ppkgdata:22.981135157648954 ppkgdata:retraction_enable .
+
+ppkgdata:layer_separation a "qual_influence"^^xsd:string ;
+    ns1:21.920917481513463 ppkgdata:material_print_temperature ;
+    ns1:22.69949143913624 ppkgdata:slicing_tolerance ;
+    ns1:23.528508444751093 ppkgdata:retraction_enable ;
+    ppkgdata:23.98504386439428 ppkgdata:material_flow .
+
+ppkgdata:line_misalignment a "qual_influence"^^xsd:string ;
+    ppkgdata:22.885569342291205 ppkgdata:speed_travel_layer_0 ;
+    ppkgdata:24.367715759770853 ppkgdata:support_z_distance .
+
+ppkgdata:lost_adhesion a "qual_influence"^^xsd:string ;
+    ns1:22.459007871553535 ppkgdata:speed_support_roof ;
+    ns1:22.798147872940522 ppkgdata:retraction_extrusion_window ;
+    ns1:24.275727558033562 ppkgdata:bridge_fan_speed ;
+    ppkgdata:21.164986670313986 ppkgdata:speed_wall_x ;
+    ppkgdata:21.923760695693208 ppkgdata:speed_print ;
+    ppkgdata:22.403069243401674 ppkgdata:speed_ironing ;
+    ppkgdata:25.336176122639955 ppkgdata:retraction_retract_speed .
+
+ppkgdata:not_labelable a "qual_influence"^^xsd:string ;
+    ns1:21.98266409316908 ppkgdata:support_z_distance .
+
+ppkgdata:over_extrusion a "qual_influence"^^xsd:string ;
+    ppkgdata:22.446867773099285 ppkgdata:material_initial_print_temperature ;
+    ppkgdata:22.96032409196672 ppkgdata:slicing_tolerance .
+
+ppkgdata:overall_ok a "qual_influence"^^xsd:string ;
+    ns1:23.57231650171378 ppkgdata:retraction_retract_speed ;
+    ppkgdata:23.518006320142305 ppkgdata:speed_topbottom .
+
+ppkgdata:poor_bridging a "qual_influence"^^xsd:string ;
+    ns1:22.699858376644226 ppkgdata:top_layers ;
+    ns1:23.11765901323731 ppkgdata:cool_fan_full_at_height ;
+    ns1:23.202695068364395 ppkgdata:speed_topbottom ;
+    ns1:24.562394299043063 ppkgdata:speed_layer_0 ;
+    ppkgdata:21.814075973870803 ppkgdata:infill_wall_line_count ;
+    ppkgdata:21.8859207549101 ppkgdata:bridge_fan_speed ;
+    ppkgdata:24.079406846360644 ppkgdata:speed_wall_0 .
+
+ppkgdata:stringing a "qual_influence"^^xsd:string ;
+    ns1:22.29228696883734 ppkgdata:retraction_enable ;
+    ns1:23.771794378311053 ppkgdata:speed_ironing ;
+    ppkgdata:22.26540154445798 ppkgdata:bottom_layers .
+
+ppkgdata:under_extrusion a "qual_influence"^^xsd:string ;
+    ns1:22.502126302350494 ppkgdata:retraction_enable ;
+    ns1:23.44455712580802 ppkgdata:material_flow ;
+    ns1:23.784732466339197 ppkgdata:layer_height ;
+    ppkgdata:23.81642113997789 ppkgdata:support_tree_angle .
+
+ppkgdata:warping a "qual_influence"^^xsd:string ;
+    ns1:22.129376198516752 ppkgdata:speed_travel_layer_0 ;
+    ns1:22.61778462959064 ppkgdata:material_initial_print_temperature ;
+    ns1:24.29833662599601 ppkgdata:retraction_min_travel ;
+    ppkgdata:22.267801848111223 ppkgdata:travel_avoid_distance .
+
+ppkgdata:bottom_layers a "parameter"^^xsd:string .
+
+ppkgdata:cool_fan_full_at_height a "parameter"^^xsd:string .
+
+ppkgdata:flow_rate_extrusion_offset_factor a "parameter"^^xsd:string .
+
+ppkgdata:layer_height a "parameter"^^xsd:string .
+
+ppkgdata:material_print_temperature a "parameter"^^xsd:string .
+
+ppkgdata:retraction_extrusion_window a "parameter"^^xsd:string .
+
+ppkgdata:speed_layer_0 a "parameter"^^xsd:string .
+
+ppkgdata:speed_support_roof a "parameter"^^xsd:string .
+
+ppkgdata:speed_wall_0 a "parameter"^^xsd:string .
+
+ppkgdata:speed_wall_x a "parameter"^^xsd:string .
+
+ppkgdata:support_tree_angle a "parameter"^^xsd:string .
+
+ppkgdata:support_xy_distance_overhang a "parameter"^^xsd:string .
+
+ppkgdata:top_layers a "parameter"^^xsd:string .
+
+ppkgdata:wall_line_count a "parameter"^^xsd:string .
+
+ppkgdata:infill_wall_line_count a "parameter"^^xsd:string .
+
+ppkgdata:material_initial_print_temperature a "parameter"^^xsd:string .
+
+ppkgdata:retraction_min_travel a "parameter"^^xsd:string .
+
+ppkgdata:slicing_tolerance a "parameter"^^xsd:string .
+
+ppkgdata:speed_ironing a "parameter"^^xsd:string .
+
+ppkgdata:speed_print a "parameter"^^xsd:string .
+
+ppkgdata:speed_topbottom a "parameter"^^xsd:string .
+
+ppkgdata:support_z_distance a "parameter"^^xsd:string .
+
+ppkgdata:travel_avoid_distance a "parameter"^^xsd:string .
+
+ppkgdata:bridge_fan_speed a "parameter"^^xsd:string .
+
+ppkgdata:material_flow a "parameter"^^xsd:string .
+
+ppkgdata:retraction_retract_speed a "parameter"^^xsd:string .
+
+ppkgdata:speed_travel_layer_0 a "parameter"^^xsd:string .
+
+ppkgdata:retraction_enable a "parameter"^^xsd:string .
+

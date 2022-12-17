@@ -185,8 +185,11 @@ class SyntheticDataGenerator:
         Returns:
             knowledge graph in rdf format (rdflib.Graph)
         """
+        edges = self.knowledge_graph.get_edge_dataframe().rename(
+            columns={'source': 'from', 'target': 'to', 'weight': 'rel'}
+        )
         rdf = RDFGraph(
-            edges=self.knowledge_graph.get_edge_dataframe(),
+            edges=edges,
             metadata=self.knowledge_graph.get_vertex_dataframe(),
             literal_graph=use_literals
         )

@@ -1,0 +1,15 @@
+@prefix : <http://purl.org/pdpk/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:dataset a void:Dataset ;
+    dcterms:created "2022-12-17"^^xsd:date ;
+    dcterms:description "This is a synthetically generated dataset of parametrisation processes in manufacturing. It contains both process data as well as knowledge graphs representing the underlying procedural expert knowledge." ;
+    dcterms:license <https://opensource.org/licenses/MIT> ;
+    dcterms:source <http://purl.org/pdpk> ;
+    dcterms:subject <https://dbpedia.org/page/Manufacturing> ;
+    dcterms:title "2f3301c2-b897-4c6d-9b26-4578e0956a8c" ;
+    void:entities "42"^^xsd:int ;
+    void:triples "48"^^xsd:int .
+
