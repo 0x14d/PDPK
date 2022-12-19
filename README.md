@@ -392,8 +392,3 @@ The follwing command line arguments are available:
 By default the following command is executed if no command line arguments are passed:
 `python -m utils.link_prediction_bias_analysis --sdg-config configs/default_config_sdg.json --no-use-literals --test-split 0.2 --seed 1111 --type1-threshold 0.75 --type2-threshold 0.5 --type13-threshold 0.5 --output-dir outputs --no-all-representations`
 
-## TODO
-
-- `number_of_bins` Beschreibung hinzufügen (bin da leider nicht so drin)
-- Notebook + link pred bias analysis main testen
-- Readme nochmal genau durchlesen und ggf. anpassen
