@@ -81,8 +81,8 @@ The synthetic data generation in seperated in different modules. Each module res
 
 | Module                      | Description                                                                                                                                                               |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| PQ-Tuple Generator          | Generates what process parameters and quality features are correlating. Also generates which of these correlations are known by the simulated experts (expert knowledge). |
-| PQ-Function                 | Function that describes how the correlating parameters influence their associated quality features                                                                        |
+| PQ-Tuple Generator          | Generates what process parameters and quality characteristics are correlating. Also generates which of these correlations are known by the simulated experts (expert knowledge). |
+| PQ-Function                 | Function that describes how the correlating parameters influence their associated quality characteristics                                                                        |
 | PQ-Function Generator       | Generates the underlying pq-functions.                                                                                                                                    |
 | Experiment Series Generator | Generates simulated parametrization processes.                                                                                                                            |
 | Experiment Generator        | Use the Experiment Series Generator(s) to generate parametrization processes and merges them together to a single dataset.                                                |
@@ -113,7 +113,7 @@ The synthetic data generation in seperated in different modules. Each module res
 
 | Generator                                  | Description                                                                                                                                                                                                                                                                                                                                            |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ExpertKnowledgeExperimentSeriesGenerator` | Each parametrization process optimizes a set of quality features by using the expert knowledge. It starts with a randomly initialized experiment and in each step all process parameters that are known to influence the quality features are optimized until all quality features reach a certain threshold.                                          |
+| `ExpertKnowledgeExperimentSeriesGenerator` | Each parametrization process optimizes a set of quality characteristics by using the expert knowledge. It starts with a randomly initialized experiment and in each step all process parameters that are known to influence the quality characteristics are optimized until all quality characteristics reach a certain threshold.                                          |
 | `TrialExperimentSeriesGenerator`           | Each experiment series optimizes a set of qualities by trying out different parameter adjustments. It starts with a random initialized experiment and in each step some parameters are adjusted in order to change the resulting qualities. If the qualities get better the same parameters are further adjusted. Otherwise new parameters are tested. |
 
 #### Experiment Generator
@@ -138,7 +138,7 @@ For each knowledge graph representation there is a corresponding knowledge graph
 All the code regarding configuration is located in `data_provider/synthetic_data_generation/config` and `data_provider/knowledge_graphs/config/knowledge_graph_generator_config.py`.
 The configuration of the synthetic data generator can be split into two parts:
 
-- Basic configuration like process parameters or quality features
+- Basic configuration like process parameters or quality characteristics
 - Module-specific configurations (one configuration for each module)
 
 The complete configuration of a synthetic data generator is bundled into the `SdgConfig` class which is located in `data_provider/synthetic_data_generation/config/sdg_config.py`.
@@ -154,9 +154,9 @@ Each process parameter can be configured with the following attributes:
 | `min_value` | `float` |`0.0`| Minimal value the parameter can have. |
 | `max_value` | `float` |`255.0`| Maximal value the parameter can have. |
 
-##### Quality Features
+##### Quality characteristics
 
-Each quality feature can be configured with the following attributes:
+Each quality characteristic can be configured with the following attributes:
 | Attribute | Type |Default| Description |
 | ----------- | ------- | -|------------------------------------- |
 | `name` | `str` |required| Name of the process parameter |
@@ -174,15 +174,15 @@ The `BasicPQTupleGenerator` can be configured with the following attributes:
 | ----------- | ------- |-| ------------------------------------- |
 | `expert_knowledge_share` | `float` |`0.75`| Proportion of the correlating pq-tuples that should be known information (expert knowledge). |
 | `num_parameters` | `int` |Use all parameters| Number of process parameters that should be used to generate pq-tuples. |
-| `num_qualities` | `int` |Use all qualities| Number of quality features that should be used to generate pq-tuples. |
-|`min_qualities_per_parameter`|`int`|`1`|Minimum number of quality features a process parameter can influence.|
-|`max_qualities_per_parameter`|`int` or `None`|`None`|Maximum number of quality features a process parameter can influence. If `None` there will be no maximum limit.|
+| `num_qualities` | `int` |Use all qualities| Number of quality characteristics that should be used to generate pq-tuples. |
+|`min_qualities_per_parameter`|`int`|`1`|Minimum number of quality characteristics a process parameter can influence.|
+|`max_qualities_per_parameter`|`int` or `None`|`None`|Maximum number of quality characteristics a process parameter can influence. If `None` there will be no maximum limit.|
 |`pq_correlation_share`|`float`|`0.1`|Proportion of the pq-tuples that should correlate to each other.|
 |`seed`|`int`|`42`|Seed used for the random number generator.|
 
 ##### PQ-Function
 
-All pq-functions can only be configured by the `coeffs` attribute. If provided it must be a `tuple` of `int` with the same length as the coefficients of the function. If it's `None` the coefficients will be generated such that the pq-function covers nearly the whole process parameter and quality feature definition range.
+All pq-functions can only be configured by the `coeffs` attribute. If provided it must be a `tuple` of `int` with the same length as the coefficients of the function. If it's `None` the coefficients will be generated such that the pq-function covers nearly the whole process parameter and quality characteristics definition range.
 
 ##### PQ-Function Generator
 
@@ -202,8 +202,8 @@ All experiment series generators can be configured with the following attributes
 | Attribute | Type |Default| Description |
 | ----------- | ------- |-| ------------------------------------- |
 |`initial_quality_rating`|`str`|`worst`|Determines how the optimized quality ratings are initalized: <ul><li>`worst`: Initialize them with a nearly worst rating </li><li>`random`: Initalize them with random ratings</li></ul>|
-|`num_qualities_to_optimize_per_series`|`int`|`1`|Number of quality features that are getting optimized per experiment series|
-|`only_optimize_qualities_with_overlapping_parameters`|`bool`|`False`|If `True` only quality features with at least one overlapping influencing process parameter are getting optimized in an parametrization process. If `False` the optimized quality features are chosen randomly.|
+|`num_qualities_to_optimize_per_series`|`int`|`1`|Number of quality characteristics that are getting optimized per experiment series|
+|`only_optimize_qualities_with_overlapping_parameters`|`bool`|`False`|If `True` only quality characteristics with at least one overlapping influencing process parameter are getting optimized in an parametrization process. If `False` the optimized quality characteristics are chosen randomly.|
 |`quality_calculation_method`|`str`|`mean`|Determines how the quality rating is calculated from multiple process parameters<ul><li>`mean`: Calculate the mean of all quality ratings </li><li>`median`: Calculate the median of all quality ratings</li><li>`best`: Calculate the maximum of all quality ratings</li><li>`worst`: Calculate the minimum of all quality ratings</li></ul>|
 |`score_threshold`|`float`|`0.05`|Threshold that determines when to stop the parameter opimization. The Score is in range [0;1] where 0 is the best and 1 the worst possible score.|
 |`seed`|`int`|`42`| Seed used for the random number generator.|
@@ -305,7 +305,7 @@ Included in this type knowledge graph are the follwing representations:
 They can be configured with the following attributes:
 | Attribute | Type |Default| Description |
 | ----------- | ------- |-| ------------------------------------- |
-|`number_of_bins`|`int`|`5`| TODO|
+|`number_of_bins`|`int`|`5`|Continuous PQ functions are discretised in 'number_of_bins' value ranges before being displayed as nodes|
 
 ### Process Data
 
@@ -339,9 +339,9 @@ All these classes are located in `data_provider/synthetic_data_generation/types/
 
 | `def get_all_experiment_series_for_quality(self, quality: str) -> List[GeneratedExperimentSeries]`                           |
 | ---------------------------------------------------------------------------------------------------------------------------- |
-| Returns a list of all parametrization processes that optimize a specific quality feature.                                    |
-| Parameters: <br> <ul> <li>`quality (str)`: Quality feature that should get optimized</li></ul>                               |
-| Returns `List[GeneratedExperimentSeries]`: List of all parametrization processes that optimize the specified quality feature |
+| Returns a list of all parametrization processes that optimize a specific quality characteristic.                                    |
+| Parameters: <br> <ul> <li>`quality (str)`: Quality characteristic that should get optimized</li></ul>                               |
+| Returns `List[GeneratedExperimentSeries]`: List of all parametrization processes that optimize the specified quality characteristic |
 
 #### GeneratedExperimentSeries
 
@@ -352,7 +352,7 @@ All these classes are located in `data_provider/synthetic_data_generation/types/
 | `experiment_series_id` | `int`                       | Unique id of the parametrization process                                        |
 | `experiments`          | `List[GeneratedExperiment]` | List of all process iterations in the parametrization process                   |
 | `generation_approach`  | `str`                       | Generator used to generate this parametrization process                         |
-| `optimized_qualities`  | `List[str]`                 | List of all quality features that get optimized in this parametrization process |
+| `optimized_qualities`  | `List[str]`                 | List of all quality characteristics that get optimized in this parametrization process |
 
 #### GeneratedExperiment
 
@@ -362,7 +362,7 @@ All these classes are located in `data_provider/synthetic_data_generation/types/
 | --------------- | ----------------- | ------------------------------------------------------------------------------------------- |
 | `experiment_id` | `int`             | Unique id of the process iteration                                                          |
 | `parameters`    | `Dict[str,float]` | Dictionary containing the values of all process parameters used in this process iteration   |
-| `qualities`     | `Dict[str,float]` | Dictionary containing the values of all quality features this process iteration resulted in |
+| `qualities`     | `Dict[str,float]` | Dictionary containing the values of all quality characteristics this process iteration resulted in |
 
 ### Knowledge Graph
 
