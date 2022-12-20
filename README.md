@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7455849.svg)](https://doi.org/10.5281/zenodo.7455849)
+
 # Table of Contents
 
 1. [Setup](#setup)
