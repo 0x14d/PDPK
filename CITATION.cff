@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Nordsieck"
+  given-names: "Richard"
+title: "PDPK"
+version: 1.0.0
+doi: 10.5281/zenodo.7455849
+date-released: 2022-12-19
+url: "https://https://purl.org/pdpk"
