@@ -382,14 +382,14 @@ The follwing command line arguments are available:
 |Argument|Type|Description|
 |-|-|-|
 |`--sdg-config <path>`|`str`|Path to the sdg config file that is used to generate the dataset <br>Default: `configs/default_config_sdg.json`|
-|`--use-literals`<br>`--no-use-literals`||Wheter to add the literals to the data (or not)<br>Default: `--no-use-literals`|
+|`--use-literals`<br>`--no-use-literals`||Whether to add the literals to the data (or not)<br>Default: `--no-use-literals`|
 |`--test-split <x>`|`float`|Proportion of the data that is included in the test split <br> Default: `0.2`|
 |`--seed <seed>`|`Any`|Random seed for the train-test-split <br>Default: `1111`|
 |`--type1-threshold <t>`|`float`|Threshold for the type 1 bias <br>Default: `0.75`|
 |`--type2-threshold <t>`|`float`|Threshold for the type 2 bias <br>Default: `0.5`|
 |`--type3-threshold <t>`|`float`|Threshold for the type 3 bias <br>Default: `0.5`|
 |`--output-dir <path>`|`str`|Path to where the output file gets saved to <br> Default: `outputs`|
-|`--all-representations` <br> `--no-all-representations`||Wheter all knowledge graph representations should be analyized (or only the one defined in the sdg config) <br> Default: `--no-all-representations`|
+|`--all-representations` <br> `--no-all-representations`||Whether all knowledge graph representations should be analyized (or only the one defined in the sdg config) <br> Default: `--no-all-representations`|
 
 By default the following command is executed if no command line arguments are passed:
 `python -m utils.link_prediction_bias_analysis --sdg-config configs/default_config_sdg.json --no-use-literals --test-split 0.2 --seed 1111 --type1-threshold 0.75 --type2-threshold 0.5 --type13-threshold 0.5 --output-dir outputs --no-all-representations`
