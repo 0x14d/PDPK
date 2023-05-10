@@ -372,26 +372,3 @@ All these classes are located in `data_provider/synthetic_data_generation/types/
 The module [`igraph`](https://igraph.readthedocs.io/en/0.10.2/index.html) is used to represent the generated knowledge graphs. It provides a wide variety of graph operations and analysis tools.
 
 Knowledge graphs can also be converted to rdf format by using the `get_knowledge_graph_as_rdf` method in the synthetic data generator.
-
-## Link Prediction Bias Analysis
-
-The `notebooks/bias_analysis.ipynb` jupyter notebook provides a simple introduction into the usage of the link prediction bias analysis.
-
-The `utils/link_prediction_bias_analysis.py` file where the bias analysis code is located can be also executed as module in order to generate a synthetic dataset and run the bias analysis for it. It generates an excel file containing information about the bias results:
-`python -m utils.link_prediction_bias_analysis` <br>
-The follwing command line arguments are available:
-|Argument|Type|Description|
-|-|-|-|
-|`--sdg-config <path>`|`str`|Path to the sdg config file that is used to generate the dataset <br>Default: `configs/default_config_sdg.json`|
-|`--use-literals`<br>`--no-use-literals`||Whether to add the literals to the data (or not)<br>Default: `--no-use-literals`|
-|`--test-split <x>`|`float`|Proportion of the data that is included in the test split <br> Default: `0.2`|
-|`--seed <seed>`|`Any`|Random seed for the train-test-split <br>Default: `1111`|
-|`--type1-threshold <t>`|`float`|Threshold for the type 1 bias <br>Default: `0.75`|
-|`--type2-threshold <t>`|`float`|Threshold for the type 2 bias <br>Default: `0.5`|
-|`--type3-threshold <t>`|`float`|Threshold for the type 3 bias <br>Default: `0.5`|
-|`--output-dir <path>`|`str`|Path to where the output file gets saved to <br> Default: `outputs`|
-|`--all-representations` <br> `--no-all-representations`||Whether all knowledge graph representations should be analyized (or only the one defined in the sdg config) <br> Default: `--no-all-representations`|
-
-By default the following command is executed if no command line arguments are passed:
-`python -m utils.link_prediction_bias_analysis --sdg-config configs/default_config_sdg.json --no-use-literals --test-split 0.2 --seed 1111 --type1-threshold 0.75 --type2-threshold 0.5 --type13-threshold 0.5 --output-dir outputs --no-all-representations`
-
