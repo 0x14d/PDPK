@@ -1,3 +1,4 @@
+from statistics import quantiles
 from pandas import DataFrame
 from rdflib import Dataset, Graph, URIRef, Literal, Namespace, RDF, XSD
 from rdflib.namespace import DefinedNamespace, Namespace
@@ -9,6 +10,8 @@ class PPKG_LITERALS(DefinedNamespace):
     implies: URIRef
     quantifies: URIRef
     quantified_by: URIRef
+    relatively_quantified_by: URIRef
+    absolutely_quantified_by: URIRef
 
     _NS = Namespace("http://purl.org/pdpk/literals#")
 
@@ -17,7 +20,9 @@ lit_dict = {
     "ends at": PPKG_LITERALS.endsAt,
     "implies": PPKG_LITERALS.implies,
     "quantifies": PPKG_LITERALS.quantifies,
-    'quantified by': PPKG_LITERALS.quantified_by
+    'quantified by': PPKG_LITERALS.quantified_by,
+    'relatively quantified by': PPKG_LITERALS.relatively_quantified_by,
+    'absolutely quantified by': PPKG_LITERALS.absolutely_quantified_by
 }
 
 class RDFGraph:
@@ -29,7 +34,7 @@ class RDFGraph:
 
     _data_uri: str = 'http://purl.org/pdpk/resource/'
 
-    def __init__(self, edges: DataFrame, metadata: DataFrame, literal_graph=False) -> None:
+    def __init__(self, edges: DataFrame, metadata: DataFrame, graph_without_shortcut=True, literal_graph=False) -> None:
         """initializes RDFGraph, runs the graph setup and generates the graph
 
         Args:

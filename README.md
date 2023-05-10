@@ -208,6 +208,7 @@ All experiment series generators can be configured with the following attributes
 |`only_optimize_qualities_with_overlapping_parameters`|`bool`|`False`|If `True` only quality characteristics with at least one overlapping influencing process parameter are getting optimized in an parametrization process. If `False` the optimized quality characteristics are chosen randomly.|
 |`quality_calculation_method`|`str`|`mean`|Determines how the quality rating is calculated from multiple process parameters<ul><li>`mean`: Calculate the mean of all quality ratings </li><li>`median`: Calculate the median of all quality ratings</li><li>`best`: Calculate the maximum of all quality ratings</li><li>`worst`: Calculate the minimum of all quality ratings</li></ul>|
 |`score_threshold`|`float`|`0.05`|Threshold that determines when to stop the parameter opimization. The Score is in range [0;1] where 0 is the best and 1 the worst possible score.|
+|`noise_proportion`|`float`|`0`|Proportion of noise to information that is actually true in expert knowledge. It is in range [0;1] where 0 equals complete knowledge and 1 zero knowledge.|
 |`seed`|`int`|`42`| Seed used for the random number generator.|
 
 ###### ExpertKnowledgeExperimentSeriesGenerator

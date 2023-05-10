@@ -26,6 +26,7 @@ from typing import Any, Literal, Optional, Union
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated
 
+
 class KnowledgeGraphGeneratorType(str, Enum):
     """
     Enum that contains the key of every available knowledge-graph-generator.
@@ -36,12 +37,20 @@ class KnowledgeGraphGeneratorType(str, Enum):
     UNQUANTIFIED = 'unquantified'
     BASIC = 'basic'
     QUANTIFIED_PARAMETERS_WITHOUT_SHORTCUT = 'quantified_parameters_without_shortcut'
+    QUANTIFIED_PARAMETERS_WITHOUT_SHORTCUT2 = 'quantified_parameters_without_shortcut2'
+    QUANTIFIED_PARAMETERS_WITHOUT_SHORTCUT3 = 'quantified_parameters_without_shortcut3'
     QUANTIFIED_PARAMETERS_WITH_SHORTCUT = 'quantified_parameters_with_shortcut'
+    QUANTIFIED_PARAMETERS_WITH_SHORTCUT2 = 'quantified_parameters_with_shortcut2'
+    QUANTIFIED_PARAMETERS_WITH_SHORTCUT3 = 'quantified_parameters_with_shortcut3'
     QUANTIFIED_PARAMETERS_WITH_LITERAL = 'quantified_parameters_with_literal'
     QUANTIFIED_PARAMETERS_W3 = 'quantified_parameters_w3'
     QUANTIFIED_PARAMETERS_W3_WITH_LITERAL = 'quantified_parameters_w3_with_literal'
     QUANTIFIED_CONDITIONS_WITHOUT_SHORTCUT = 'quantified_conditions_without_shortcut'
+    QUANTIFIED_CONDITIONS_WITHOUT_SHORTCUT2 = 'quantified_conditions_without_shortcut2'
+    QUANTIFIED_CONDITIONS_WITHOUT_SHORTCUT3 = 'quantified_conditions_without_shortcut3'
     QUANTIFIED_CONDITIONS_WITH_SHORTCUT = 'quantified_conditions_with_shortcut'
+    QUANTIFIED_CONDITIONS_WITH_SHORTCUT2 = 'quantified_conditions_with_shortcut2'
+    QUANTIFIED_CONDITIONS_WITH_SHORTCUT3 = 'quantified_conditions_with_shortcut3'
     QUANTIFIED_CONDITIONS_WITH_LITERAL = 'quantified_conditions_with_literal'
     QUANTIFIED_CONDITIONS_W3 = 'quantified_conditions_w3'
     QUANTIFIED_CONDITIONS_W3_WITH_LITERAL = 'quantified_conditions_w3_with_literal'
@@ -61,18 +70,36 @@ class KnowledgeGraphGeneratorType(str, Enum):
             return QuantifiedParametersWithLiteralKnowledgeGraphGeneratorConfig()
         if self == KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITH_SHORTCUT:
             return QuantifiedParametersWithShortcutKnowledgeGraphGeneratorConfig()
+        if self == KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITH_SHORTCUT2:
+            return QuantifiedParametersWithShortcut2KnowledgeGraphGeneratorConfig()
+        if self == KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITH_SHORTCUT3:
+            return QuantifiedParametersWithShortcut3KnowledgeGraphGeneratorConfig()
         if self == KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITHOUT_SHORTCUT:
             return QuantifiedParametersWithoutShortcutKnowledgeGraphGeneratorConfig()
+        if self == KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITHOUT_SHORTCUT2:
+            return QuantifiedParametersWithoutShortcut2KnowledgeGraphGeneratorConfig()
+        if self == KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITHOUT_SHORTCUT3:
+            return QuantifiedParametersWithoutShortcut3KnowledgeGraphGeneratorConfig()
         if self == KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_W3:
             return QuantifiedParametersW3KnowledgeGraphGeneratorConfig()
         if self == KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_W3_WITH_LITERAL:
             return QuantifiedParametersW3WithLiteralKnowledgeGraphGeneratorConfig()
         if self == KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITHOUT_SHORTCUT:
             return QuantifiedConditionsWithoutShortcutKnowledgeGraphGeneratorConfig()
+        if self == KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITHOUT_SHORTCUT2:
+            return QuantifiedConditionsWithoutShortcut2KnowledgeGraphGeneratorConfig()
+        if self == KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITHOUT_SHORTCUT3:
+            return QuantifiedConditionsWithoutShortcut3KnowledgeGraphGeneratorConfig()
         if self == KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITH_SHORTCUT:
             return QuantifiedConditionsWithShortcutKnowledgeGraphGeneratorConfig()
+        if self == KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITH_SHORTCUT2:
+            return QuantifiedConditionsWithShortcut2KnowledgeGraphGeneratorConfig()
+        if self == KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITH_SHORTCUT3:
+            return QuantifiedConditionsWithShortcut3KnowledgeGraphGeneratorConfig()
         if self == KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITH_LITERAL:
             return QuantifiedConditionsWithLiteralKnowledgeGraphGeneratorConfig()
+        if self == KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_W3:
+            return QuantifiedParametersW3KnowledgeGraphGeneratorConfig()
         if self == KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_W3:
             return QuantifiedConditionsW3KnowledgeGraphGeneratorConfig()
         if self == KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_W3_WITH_LITERAL:
@@ -88,22 +115,32 @@ class KnowledgeGraphGeneratorType(str, Enum):
             KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITHOUT_SHORTCUT: r"$r_{\hat{\rho}, ch,e}$",
             KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITH_SHORTCUT: r"$r_{\hat{\rho}, ch, e, \eta}$",
             KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITH_LITERAL: r"$r_{\hat{\rho}, ch, l, \eta}$",
-            KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_W3: r"$r_{\hat{\rho}, ii, e, \eta}$",
-            KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_W3_WITH_LITERAL: r"$r_{\hat{\rho}, ii, l, \eta}$",
+            KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_W3: r"$r_{\hat{\rho}, rei, e, \eta}$",
+            KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_W3_WITH_LITERAL: r"$r_{\hat{\rho}, rei, l, \eta}$",
             KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITHOUT_SHORTCUT: r"$r_{\hat{\mathrm{o}},\hat{\rho}, ch, e}$",
             KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITH_SHORTCUT: r"$r_{\hat{\mathrm{o}},\hat{\rho}, ch, e, \eta}$",
             KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITH_LITERAL: r"$r_{\hat{\mathrm{o}},\hat{\rho}, ch, l, \eta}$",
-            KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_W3: r"$r_{\hat{\mathrm{o}},\hat{\rho}, ii, e, \eta}$",
-            KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_W3_WITH_LITERAL: r"$r_{\hat{\mathrm{o}},\hat{\rho}, ii, l, \eta}$",
+            KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_W3: r"$r_{\hat{\mathrm{o}},\hat{\rho}, rei, e, \eta}$",
+            KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_W3_WITH_LITERAL: r"$r_{\hat{\mathrm{o}},\hat{\rho}, rei, l, \eta}$",
         }
+        labels[KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITHOUT_SHORTCUT2] = labels[
+            KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITHOUT_SHORTCUT] + ' 2'
+        labels[KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITHOUT_SHORTCUT3] = labels[
+            KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITHOUT_SHORTCUT] + ' 3'
+        labels[KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITH_SHORTCUT2] = labels[
+            KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITH_SHORTCUT] + ' 2'
+        labels[KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITH_SHORTCUT3] = labels[
+            KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITH_SHORTCUT] + ' 3'
+        labels[KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITHOUT_SHORTCUT2] = labels[
+            KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITHOUT_SHORTCUT] + ' 2'
+        labels[KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITHOUT_SHORTCUT3] = labels[
+            KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITHOUT_SHORTCUT] + ' 3'
+        labels[KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITH_SHORTCUT2] = labels[
+            KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITH_SHORTCUT] + ' 2'
+        labels[KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITH_SHORTCUT3] = labels[
+            KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITH_SHORTCUT] + ' 3'
         return labels.get(self, self.value)
 
-class EdgeWeightCalculationMethod(str, Enum):
-    """
-    Method to calculate the edge weights
-    """
-    MEAN_ABSOLUTE = 'mean_absolute'
-    """Mean of all absolute changes of the parameter"""
 
 class AbstractKnowledgeGraphGeneratorConfig(BaseModel, ABC):
     """
@@ -127,9 +164,6 @@ class BasicKnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
     """
     type: Literal[KnowledgeGraphGeneratorType.BASIC] = KnowledgeGraphGeneratorType.BASIC
 
-    edge_weight: EdgeWeightCalculationMethod = EdgeWeightCalculationMethod.MEAN_ABSOLUTE
-    """Method used to calculate the edge weights"""
-
     knowledge_share: float = 1.0
     """Proportion of the expert knowledge that is included into the knowledge graph"""
 
@@ -140,14 +174,12 @@ class BasicKnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
         from data_provider.knowledge_graphs.generators.basic_knowledge_graph_generator import BasicKnowledgeGraphGenerator
         return BasicKnowledgeGraphGenerator
 
+
 class QuantifiedParametersWithoutShortcutKnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
     """
     Configuration of the `QuantifiedParametersWithoutShortcutKnowledgeGraphGenerator`
     """
     type: Literal[KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITHOUT_SHORTCUT] = KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITHOUT_SHORTCUT
-
-    edge_weight: EdgeWeightCalculationMethod = EdgeWeightCalculationMethod.MEAN_ABSOLUTE
-    """Method used to calculate the edge weights"""
 
     knowledge_share: float = 1.0
     """Proportion of the expert knowledge that is included into the knowledge graph"""
@@ -156,17 +188,49 @@ class QuantifiedParametersWithoutShortcutKnowledgeGraphGeneratorConfig(AbstractK
     """Seed of the random number generator"""
 
     def get_generator_class(self):
-        from data_provider.knowledge_graphs.generators.quantifed_parameters_without_shortcut import QuantifiedParametersWithoutShortcut
+        from data_provider.knowledge_graphs.generators.quantified_parameters_without_shortcut import QuantifiedParametersWithoutShortcut
         return QuantifiedParametersWithoutShortcut
+
+
+class QuantifiedParametersWithoutShortcut2KnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
+    """
+    Configuration of the `QuantifiedParametersWithoutShortcut2KnowledgeGraphGenerator`
+    """
+    type: Literal[KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITHOUT_SHORTCUT2] = KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITHOUT_SHORTCUT2
+
+    knowledge_share: float = 1.0
+    """Proportion of the expert knowledge that is included into the knowledge graph"""
+
+    seed: int = 42
+    """Seed of the random number generator"""
+
+    def get_generator_class(self):
+        from data_provider.knowledge_graphs.generators.quantified_parameters_without_shortcut2 import QuantifiedParametersWithoutShortcut2
+        return QuantifiedParametersWithoutShortcut2
+
+
+class QuantifiedParametersWithoutShortcut3KnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
+    """
+    Configuration of the `QuantifiedParametersWithoutShortcut3KnowledgeGraphGenerator`
+    """
+    type: Literal[KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITHOUT_SHORTCUT3] = KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITHOUT_SHORTCUT3
+
+    knowledge_share: float = 1.0
+    """Proportion of the expert knowledge that is included into the knowledge graph"""
+
+    seed: int = 42
+    """Seed of the random number generator"""
+
+    def get_generator_class(self):
+        from data_provider.knowledge_graphs.generators.quantified_parameters_without_shortcut3 import QuantifiedParametersWithoutShortcut3
+        return QuantifiedParametersWithoutShortcut3
+
 
 class QuantifiedParametersWithShortcutKnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
     """
     Configuration of the `QuantifiedParametersWithShortcutKnowledgeGraphGenerator`
     """
     type: Literal[KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITH_SHORTCUT] = KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITH_SHORTCUT
-
-    edge_weight: EdgeWeightCalculationMethod = EdgeWeightCalculationMethod.MEAN_ABSOLUTE
-    """Method used to calculate the edge weights"""
 
     knowledge_share: float = 1.0
     """Proportion of the expert knowledge that is included into the knowledge graph"""
@@ -178,14 +242,46 @@ class QuantifiedParametersWithShortcutKnowledgeGraphGeneratorConfig(AbstractKnow
         from data_provider.knowledge_graphs.generators.quantified_parameters_with_shortcut import QuantifiedParametersWithShortcut
         return QuantifiedParametersWithShortcut
 
+
+class QuantifiedParametersWithShortcut2KnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
+    """
+    Configuration of the `QuantifiedParametersWithShortcut2KnowledgeGraphGenerator`
+    """
+    type: Literal[KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITH_SHORTCUT2] = KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITH_SHORTCUT2
+
+    knowledge_share: float = 1.0
+    """Proportion of the expert knowledge that is included into the knowledge graph"""
+
+    seed: int = 42
+    """Seed of the random number generator"""
+
+    def get_generator_class(self):
+        from data_provider.knowledge_graphs.generators.quantified_parameters_with_shortcut2 import QuantifiedParametersWithShortcut2
+        return QuantifiedParametersWithShortcut2
+
+
+class QuantifiedParametersWithShortcut3KnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
+    """
+    Configuration of the `QuantifiedParametersWithShortcut3KnowledgeGraphGenerator`
+    """
+    type: Literal[KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITH_SHORTCUT3] = KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITH_SHORTCUT3
+
+    knowledge_share: float = 1.0
+    """Proportion of the expert knowledge that is included into the knowledge graph"""
+
+    seed: int = 42
+    """Seed of the random number generator"""
+
+    def get_generator_class(self):
+        from data_provider.knowledge_graphs.generators.quantified_parameters_with_shortcut3 import QuantifiedParametersWithShortcut3
+        return QuantifiedParametersWithShortcut3
+
+
 class QuantifiedParametersWithLiteralKnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
     """
     Configuration of the `QuantifiedParametersWithLiteralKnowledgeGraphGenerator`
     """
     type: Literal[KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITH_LITERAL] = KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_WITH_LITERAL
-
-    edge_weight: EdgeWeightCalculationMethod = EdgeWeightCalculationMethod.MEAN_ABSOLUTE
-    """Method used to calculate the edge weights"""
 
     knowledge_share: float = 1.0
     """Proportion of the expert knowledge that is included into the knowledge graph"""
@@ -197,14 +293,12 @@ class QuantifiedParametersWithLiteralKnowledgeGraphGeneratorConfig(AbstractKnowl
         from data_provider.knowledge_graphs.generators.quantified_parameters_with_literal import QuantifiedParametersWithLiteral
         return QuantifiedParametersWithLiteral
 
+
 class QuantifiedParametersW3KnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
     """
     Configuration of the `QuantifiedParametersW3KnowledgeGraphGenerator`
     """
     type: Literal[KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_W3] = KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_W3
-
-    edge_weight: EdgeWeightCalculationMethod = EdgeWeightCalculationMethod.MEAN_ABSOLUTE
-    """Method used to calculate the edge weights"""
 
     knowledge_share: float = 1.0
     """Proportion of the expert knowledge that is included into the knowledge graph"""
@@ -215,6 +309,7 @@ class QuantifiedParametersW3KnowledgeGraphGeneratorConfig(AbstractKnowledgeGraph
     def get_generator_class(self):
         from data_provider.knowledge_graphs.generators.quantified_parameters_w3 import QuantifiedParametersW3
         return QuantifiedParametersW3
+
 
 class QuantifiedParametersW3WithLiteralKnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
     """
@@ -222,9 +317,6 @@ class QuantifiedParametersW3WithLiteralKnowledgeGraphGeneratorConfig(AbstractKno
     """
     type: Literal[KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_W3_WITH_LITERAL] = KnowledgeGraphGeneratorType.QUANTIFIED_PARAMETERS_W3_WITH_LITERAL
 
-    edge_weight: EdgeWeightCalculationMethod = EdgeWeightCalculationMethod.MEAN_ABSOLUTE
-    """Method used to calculate the edge weights"""
-
     knowledge_share: float = 1.0
     """Proportion of the expert knowledge that is included into the knowledge graph"""
 
@@ -235,14 +327,12 @@ class QuantifiedParametersW3WithLiteralKnowledgeGraphGeneratorConfig(AbstractKno
         from data_provider.knowledge_graphs.generators.quantified_parameters_w3 import QuantifiedParametersW3
         return QuantifiedParametersW3
 
+
 class UnquantifiedKnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
     """
     Configuration of the `UnquantifiedKGGenerator`
     """
     type: Literal[KnowledgeGraphGeneratorType.UNQUANTIFIED] = KnowledgeGraphGeneratorType.UNQUANTIFIED
-
-    edge_weight: EdgeWeightCalculationMethod = EdgeWeightCalculationMethod.MEAN_ABSOLUTE
-    """Method used to calculate the edge weights"""
 
     knowledge_share: float = 1.0
     """Proportion of the expert knowledge that is included into the knowledge graph"""
@@ -272,6 +362,40 @@ class QuantifiedConditionsWithoutShortcutKnowledgeGraphGeneratorConfig(AbstractK
         return QcWithoutShortcut
 
 
+class QuantifiedConditionsWithoutShortcut2KnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
+    """
+    Configuration of the 'QuantifiedConditionsWithoutShortcut2Generarator'
+    """
+    type: Literal[KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITHOUT_SHORTCUT2] = KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITHOUT_SHORTCUT2
+
+    seed: int = 42
+
+    knowledge_share: float = 1.0
+
+    number_of_bins: int = 5
+
+    def get_generator_class(self):
+        from data_provider.knowledge_graphs.generators.qc_without_shortcut2 import QcWithoutShortcut2
+        return QcWithoutShortcut2
+
+
+class QuantifiedConditionsWithoutShortcut3KnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
+    """
+    Configuration of the 'QuantifiedConditionsWithoutShortcut3Generarator'
+    """
+    type: Literal[KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITHOUT_SHORTCUT3] = KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITHOUT_SHORTCUT3
+
+    seed: int = 42
+
+    knowledge_share: float = 1.0
+
+    number_of_bins: int = 5
+
+    def get_generator_class(self):
+        from data_provider.knowledge_graphs.generators.qc_without_shortcut3 import QcWithoutShortcut3
+        return QcWithoutShortcut3
+
+
 class QuantifiedConditionsWithShortcutKnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
     """
     Configuration of the 'QuantifiedConditionsWithShortcutKnowledgeGraphGenerator'
@@ -287,6 +411,40 @@ class QuantifiedConditionsWithShortcutKnowledgeGraphGeneratorConfig(AbstractKnow
     def get_generator_class(self):
         from data_provider.knowledge_graphs.generators.qc_with_shortcut import QcWithShortcut
         return QcWithShortcut
+
+
+class QuantifiedConditionsWithShortcut2KnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
+    """
+    Configuration of the 'QuantifiedConditionsWithShortcut2KnowledgeGraphGenerator'
+    """
+    type: Literal[KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITH_SHORTCUT2] = KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITH_SHORTCUT2
+
+    seed: int = 42
+
+    knowledge_share: float = 1.0
+
+    number_of_bins: int = 5
+
+    def get_generator_class(self):
+        from data_provider.knowledge_graphs.generators.qc_with_shortcut2 import QcWithShortcut2
+        return QcWithShortcut2
+
+
+class QuantifiedConditionsWithShortcut3KnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
+    """
+    Configuration of the 'QuantifiedConditionsWithShortcut3KnowledgeGraphGenerator'
+    """
+    type: Literal[KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITH_SHORTCUT3] = KnowledgeGraphGeneratorType.QUANTIFIED_CONDITIONS_WITH_SHORTCUT3
+
+    seed: int = 42
+
+    knowledge_share: float = 1.0
+
+    number_of_bins: int = 5
+
+    def get_generator_class(self):
+        from data_provider.knowledge_graphs.generators.qc_with_shortcut3 import QcWithShortcut3
+        return QcWithShortcut3
 
 
 class QuantifiedConditionsWithLiteralKnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
@@ -305,6 +463,7 @@ class QuantifiedConditionsWithLiteralKnowledgeGraphGeneratorConfig(AbstractKnowl
         from data_provider.knowledge_graphs.generators.qc_with_literal import QcWithLiteral
         return QcWithLiteral
 
+
 class QuantifiedConditionsW3KnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
     """
     Configuration of the 'QuantifiedConditionsW3KnowledgeGraphGenerator'
@@ -320,6 +479,7 @@ class QuantifiedConditionsW3KnowledgeGraphGeneratorConfig(AbstractKnowledgeGraph
     def get_generator_class(self):
         from data_provider.knowledge_graphs.generators.qc_w3 import QcW3
         return QcW3
+
 
 class QuantifiedConditionsW3WithLiteralKnowledgeGraphGeneratorConfig(AbstractKnowledgeGraphGeneratorConfig):
     """
@@ -339,23 +499,31 @@ class QuantifiedConditionsW3WithLiteralKnowledgeGraphGeneratorConfig(AbstractKno
 
 
 KnowledgeGraphGeneratorConfig = Annotated[
-                                    Union[
-                                        KnowledgeGraphGeneratorType,
-                                        BasicKnowledgeGraphGeneratorConfig,
-                                        QuantifiedConditionsWithoutShortcutKnowledgeGraphGeneratorConfig,
-                                        QuantifiedConditionsWithShortcutKnowledgeGraphGeneratorConfig,
-                                        QuantifiedConditionsWithLiteralKnowledgeGraphGeneratorConfig,
-                                        UnquantifiedKnowledgeGraphGeneratorConfig,
-                                        QuantifiedParametersWithoutShortcutKnowledgeGraphGeneratorConfig,
-                                        QuantifiedParametersWithShortcutKnowledgeGraphGeneratorConfig,
-                                        QuantifiedParametersWithLiteralKnowledgeGraphGeneratorConfig,
-                                        QuantifiedConditionsW3KnowledgeGraphGeneratorConfig,
-                                        QuantifiedParametersW3KnowledgeGraphGeneratorConfig,
-                                        QuantifiedParametersW3WithLiteralKnowledgeGraphGeneratorConfig,
-                                        QuantifiedConditionsW3WithLiteralKnowledgeGraphGeneratorConfig,
-                                    ],
-                                    Field(discriminator='type')
-                                ]
+    Union[
+        KnowledgeGraphGeneratorType,
+        BasicKnowledgeGraphGeneratorConfig,
+        QuantifiedConditionsWithoutShortcutKnowledgeGraphGeneratorConfig,
+        QuantifiedConditionsWithoutShortcut2KnowledgeGraphGeneratorConfig,
+        QuantifiedConditionsWithoutShortcut3KnowledgeGraphGeneratorConfig,
+        QuantifiedConditionsWithShortcutKnowledgeGraphGeneratorConfig,
+        QuantifiedConditionsWithShortcut2KnowledgeGraphGeneratorConfig,
+        QuantifiedConditionsWithShortcut3KnowledgeGraphGeneratorConfig,
+        QuantifiedConditionsWithLiteralKnowledgeGraphGeneratorConfig,
+        UnquantifiedKnowledgeGraphGeneratorConfig,
+        QuantifiedParametersWithoutShortcutKnowledgeGraphGeneratorConfig,
+        QuantifiedParametersWithoutShortcut2KnowledgeGraphGeneratorConfig,
+        QuantifiedParametersWithoutShortcut3KnowledgeGraphGeneratorConfig,
+        QuantifiedParametersWithShortcutKnowledgeGraphGeneratorConfig,
+        QuantifiedParametersWithShortcut2KnowledgeGraphGeneratorConfig,
+        QuantifiedParametersWithShortcut3KnowledgeGraphGeneratorConfig,
+        QuantifiedParametersWithLiteralKnowledgeGraphGeneratorConfig,
+        QuantifiedConditionsW3KnowledgeGraphGeneratorConfig,
+        QuantifiedParametersW3KnowledgeGraphGeneratorConfig,
+        QuantifiedParametersW3WithLiteralKnowledgeGraphGeneratorConfig,
+        QuantifiedConditionsW3WithLiteralKnowledgeGraphGeneratorConfig,
+    ],
+    Field(discriminator='type')
+]
 """Type alias that contains all available knowledge-graph-generator configuration classes."""
 
 

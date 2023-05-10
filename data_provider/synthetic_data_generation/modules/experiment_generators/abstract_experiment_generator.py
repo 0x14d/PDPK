@@ -107,6 +107,11 @@ class ExperimentGenerator(ABC):
             series_to_cut = new_experiment_series[0]
             series_to_cut.experiments.pop(index_to_cut(len(series_to_cut)))
 
+        # Remove wrong information about the first experiments in each series
+        for series in new_experiment_series:
+            series.experiments[0].adjusted_parameters = None
+            series.experiments[0].optimized_qualities = None
+
         return new_experiment_series
 
     def _create_experiment_series_from_class(
@@ -139,6 +144,7 @@ class ExperimentGenerator(ABC):
                 experiment_series_config=experiment_series_config,
                 sdg_config=self._args.sdg_config,
                 pq_functions=self._args.pq_functions,
+                pq_function_generator=self._args.pq_function_generator,
                 pq_tuples=self._args.pq_tuples
             )
         )

@@ -6,8 +6,6 @@ This module provides the class `BasicPQTupleGeneratorConfig`.
 
 from math import ceil, floor
 from typing import List
-from numpy.random import default_rng as rng
-from numpy.random import Generator
 
 from data_provider.synthetic_data_generation.config.modules.pq_tuple_generator_config \
     import BasicPQTupleGeneratorConfig, USE_ALL_PARAMETERS, USE_ALL_QUALITIES
@@ -32,12 +30,9 @@ class BasicPQTupleGenerator(PQTupleGenerator):
     _config: BasicPQTupleGeneratorConfig
     _parameters: List[str]
     _qualities: List[str]
-    _rng: Generator
 
     def __init__(self, args: PQTupleGeneratorArguments) -> None:
-        super().__init__()
-        self._config = args.sdg_config.pq_tuple_generator
-        self._rng = rng(self._config.seed)
+        super().__init__(args)
 
         parameters: DefaultParameterConfig = args.sdg_config.parameters
         self._parameters = [p.name for p in parameters]

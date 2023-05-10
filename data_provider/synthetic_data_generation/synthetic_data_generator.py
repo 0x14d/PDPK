@@ -6,7 +6,7 @@ This module provides the class `SyntheticDataGenerator`.
 
 from copy import deepcopy
 from datetime import datetime
-from typing import Optional, Union
+from typing import List, Optional, Union
 import uuid
 
 import igraph
@@ -27,11 +27,12 @@ from data_provider.synthetic_data_generation.modules.pq_tuple_generators.\
 from data_provider.synthetic_data_generation.types.experiments import GeneratedDataset
 from data_provider.synthetic_data_generation.types.generator_arguments  \
     import ExperimentGeneratorArguments, KnowledgeGraphGeneratorArguments, \
-        NoiseGeneratorArguments, PQFunctionGeneratorArguments, PQTupleGeneratorArguments
+        NoiseGeneratorArguments, PQTupleGeneratorArguments
+from data_provider.synthetic_data_generation.types.generator_arguments2 \
+    import PQFunctionGeneratorArguments
 from data_provider.synthetic_data_generation.types.pq_function import GeneratedPQFunctions
 from data_provider.synthetic_data_generation.types.pq_tuple import GeneratedPQTuples
 from data_provider.knowledge_graphs.pq_relation import PQ_Relation
-from utils.rdf_graph import RDFGraph
 
 
 class SyntheticDataGenerator:
@@ -47,6 +48,9 @@ class SyntheticDataGenerator:
 
     pq_tuples: GeneratedPQTuples
     """Generated pq-tuples (correlating pq-tuples, expert knowledge etc.)"""
+
+    pq_relations: List[PQ_Relation]
+    """Generated pq-relations"""
 
     _dataset_generator: ExperimentGenerator
     _knowledge_graph_generator: KnowledgeGraphGenerator
@@ -86,7 +90,7 @@ class SyntheticDataGenerator:
         # Convert the SDG generated PQ-Tuples and Functions to the new PQ_Relation
         # format to ensure compatibility from SDG- and AIPE-Providers and the
         # representations
-        pq_relations = PQ_Relation.from_pq_function(
+        self.pq_relations = PQ_Relation.from_pq_function(
             pq_functions= self.pq_functions,
             pq_tuples= self.pq_tuples,
             config = self.config
@@ -97,7 +101,7 @@ class SyntheticDataGenerator:
                 sdg_config=self.config,
                 pq_functions=None,
                 pq_tuples=None,
-                pq_relations=pq_relations
+                pq_relations=self.pq_relations
             )
         )
 
@@ -105,6 +109,7 @@ class SyntheticDataGenerator:
             ExperimentGeneratorArguments(
                 sdg_config=self.config,
                 pq_functions=self.pq_functions,
+                pq_function_generator=self._pq_function_generator,
                 pq_tuples=self.pq_tuples
             )
         )
@@ -174,26 +179,6 @@ class SyntheticDataGenerator:
         graph.add((dataset, VOID.entities, entities))
 
         return graph
-    
-    def get_knowledge_graph_as_rdf(self, use_literals: bool=False) -> rdflib.Graph:
-        """
-        Returns the knowledge graph in rdf format
-        
-        Parameters:
-            - use_literals (bool, default: False): Include literls in graph?
-        
-        Returns:
-            knowledge graph in rdf format (rdflib.Graph)
-        """
-        edges = self.knowledge_graph.get_edge_dataframe().rename(
-            columns={'source': 'from', 'target': 'to', 'weight': 'rel'}
-        )
-        rdf = RDFGraph(
-            edges=edges,
-            metadata=self.knowledge_graph.get_vertex_dataframe(),
-            literal_graph=use_literals
-        )
-        return rdf.graph
 
     def create_new_knowledge_graph(self) -> igraph.Graph:
         """

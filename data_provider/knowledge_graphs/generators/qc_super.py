@@ -35,218 +35,197 @@ class QC_super(ABC):
         self._rng = rng(self._config.seed)
 
     def generalized_generate_knowledge_graph(
-        self, with_shortcut: bool, with_nary=False
+        self,
+        with_shortcut: bool,
+        w3: bool = False,
+        flip_quantified_by: bool = False,
+        additional_flipped_quantified_by: bool = False
     ) -> Graph:
+        """
+        Creates a knowledge graph
+
+        Parameters:
+            - `with_shortcut`: Whether to include a direct relation between quality and parameter
+            - `flip_quantified_by`: Whether to flip the relation between the parameter and its
+            quantification to be a 'quantifies' instead of a 'quantified by' relation
+            - `additional_flipped_quantified_by`: Whether to include a 'quantifies' relation between
+            the parameter and its quantification in addition to the 'quantified by' relation
+
+        Returns:
+            Created knowledge graph using the specified configurations
+        """
+        if flip_quantified_by and additional_flipped_quantified_by:
+            raise ValueError('Only flip_quantified_by or additional_flipped_quantified_by can be set to True, not both!')
+        if w3 and any([flip_quantified_by, additional_flipped_quantified_by]):
+            raise ValueError('flip_quantified_by and additional_flipped_quantified_by must be False if w3 is True!')
+
         knowledge_graph = Graph(directed=True)
 
         num_included = int(len(self._relations) * self._config.knowledge_share)
-        pq_tuples_included: List[PQ_Relation] = self._rng.choice(
+        pq_relations_included: List[PQ_Relation] = self._rng.choice(
             a=self._relations, size=num_included, replace=False
         )
 
-        for pq_tuple in pq_tuples_included:
-            added = add_vertex_to_graph(knowledge_graph, pq_tuple.quality)
+        for pq_relation in pq_relations_included:
+            added = add_vertex_to_graph(knowledge_graph, pq_relation.quality)
             added["type"] = "qual_influence"
 
-            added = add_vertex_to_graph(knowledge_graph, pq_tuple.parameter)
+            added = add_vertex_to_graph(knowledge_graph, pq_relation.parameter)
             added["type"] = "parameter"
 
-            pair = (pq_tuple.parameter, pq_tuple.quality)
-
-            if with_nary:
-                self.add_w3_relation(
-                    pair, knowledge_graph, pq_tuple.condition_scopes, pq_tuple.condition_values
-                )
+            if w3:
+                self.add_w3_relation(pq_relation, knowledge_graph)
             else:
                 self.add_relation(
-                    pair,
-                    knowledge_graph,
-                    pq_tuple.action,
-                    pq_tuple.condition_scopes,
-                    pq_tuple.condition_values,
-                    with_shortcut,
+                    pq_relation, knowledge_graph, with_shortcut,
+                    flip_quantified_by, additional_flipped_quantified_by
                 )
+
         return knowledge_graph
 
-    def add_w3_relation(self, pq_tuple, knowledge_graph, bins, bin_values):
+    def add_w3_relation(
+        self,
+        pq_relation: PQ_Relation,
+        knowledge_graph: Graph
+    ) -> None:
         """Adds a relation to the knowledge graph in the Style recommended by W3
 
         Args:
-            pq_tuple (tuple(parameter: str,quality : str)): the pq-relation to add
+            pq_relation (PQ_Relation): the pq-relation to add
             knowledge_graph (iGraph.Graph): the Graph to add the relation to
         """
-        parameter = pq_tuple[0]
-        quality = pq_tuple[1]
+        parameter = pq_relation.parameter
+        quality = pq_relation.quality
+        bin_values = pq_relation.conclusion_quantifications
 
-        nary_name = parameter + "-" + quality + "-" + "relation"
-        nary = add_vertex_to_graph(knowledge_graph, nary_name)
-        pq_rel = knowledge_graph.vs.select()[-1]
-        pq_rel["type"] = "pq-relation"
+        pq_rel_name = parameter + "-" + quality + "-" + "relation"
+        pq_rel_vertex = add_vertex_to_graph(knowledge_graph, pq_rel_name)
+        pq_rel_vertex["type"] = "pq-relation"
 
-        added = knowledge_graph.add_edge(quality, nary)
+        added = knowledge_graph.add_edge(quality, pq_rel_vertex)
         added["weight"] = "implies"
-        added = knowledge_graph.add_edge(nary, parameter)
+        added = knowledge_graph.add_edge(pq_rel_vertex, parameter)
         added["weight"] = "implied parameter"
         added["literal_included"] = "None"
 
         count = 0
         uid = 0
-        for i in range(len(bins)):
-            # Check which bin edge is lower and then set the start point to the
-            # lower boundary
-            if bins[i][0] < bins[i][1]:
-                start_point = bins[i][0]
-                end_point = bins[i][1]
-            elif bins[i][0] > bins[i][1]:
-                start_point = bins[i][1]
-                end_point = bins[i][0]
+        for i, _bin in enumerate(pq_relation.condition_scopes):
+            start_point = min(_bin)
+            end_point = max(_bin)
 
-            value = (
-                str(bin_values[i])
-                + "-for-"
-                + parameter
-                + "-"
-                + quality
-                + "|"
-                + str(uid)
-            )
+            nu = f'{bin_values[i]}-for-{parameter}-{quality}|{uid}'
             uid += 1
-            bin = (
-                ("µ_" + str(i) + ": " + str(start_point) + "-" + str(end_point))
-                + "-for-"
-                + parameter
-                + "-"
-                + quality
-            )
-            bin_start = (
-                str(start_point) + "-for-" + parameter + "-" + quality + "|" + str(uid)
-            )
+            bin_start = f'{start_point}-for-{parameter}-{quality}|{uid}'
             uid += 1
-            bin_end = (
-                str(end_point) + "-for-" + parameter + "-" + quality + "|" + str(uid)
-            )
+            bin_end = f'{end_point}-for-{parameter}-{quality}|{uid}'
             uid += 1
 
-            value_vertex = add_vertex_to_graph(knowledge_graph, value)
-            # Knew vertices are appended to a list, get the end of the list to get the vertex object
-            value_vertex["type"] = "quantified_conclusion"
-            value_vertex["literal_value"] = str(bin_values[i])
-            value_vertex["corresponding_parameter"] = parameter
-            bin_vertex = add_vertex_to_graph(knowledge_graph, bin)
-            bin_vertex["type"] = "quantified_condition"
-            start_vertex = add_vertex_to_graph(knowledge_graph, bin_start)
-            start_vertex["type"] = "value"
-            start_vertex["literal_value"] = str(start_point)
-            end_vertex = add_vertex_to_graph(knowledge_graph, bin_end)
-            end_vertex["type"] = "value"
-            end_vertex["literal_value"] = str(end_point)
+            nu_vertex = add_vertex_to_graph(knowledge_graph, nu)
+            # known vertices are appended to a list, get the end of the list to get the vertex object
+            nu_vertex["type"] = "quantified_conclusion"
+            nu_vertex["literal_value"] = str(bin_values[i])
+            nu_vertex["corresponding_parameter"] = parameter
+            nu_vertex["is_relative_value"] = pq_relation.action == PQ_Relation.Action.ADJUST
+            lower_mu_vertex = add_vertex_to_graph(knowledge_graph, bin_start)
+            lower_mu_vertex["type"] = "value"
+            lower_mu_vertex["literal_value"] = str(start_point)
+            upper_mu_vertex = add_vertex_to_graph(knowledge_graph, bin_end)
+            upper_mu_vertex["type"] = "value"
+            upper_mu_vertex["literal_value"] = str(end_point)
 
-            rel_name = (
-                "my"
-                + str(count)
-                + "-"
-                + "ny"
-                + str(count)
-                + "-relation"
-                + "-for-"
-                + parameter
-                + "-"
-                + quality
-            )
-            myny_rel = add_vertex_to_graph(knowledge_graph, rel_name)
-            rel_vertex = knowledge_graph.vs.select()[-1]
-            rel_vertex["type"] = "my-ny-relation"
+            mu_nu_name = f'my{count}-ny{count}-relation-for-{parameter}-{quality}'
+            mu_nu_vertex = add_vertex_to_graph(knowledge_graph, mu_nu_name)
+            mu_nu_vertex["type"] = "my-ny-relation"
 
-            added = knowledge_graph.add_edge(pq_rel, myny_rel)
+            added = knowledge_graph.add_edge(pq_rel_vertex, mu_nu_vertex)
             added["weight"] = "quantified by"
             added["literal_included"] = "None"
 
-            added = knowledge_graph.add_edge(myny_rel, start_vertex)
+            added = knowledge_graph.add_edge(mu_nu_vertex, lower_mu_vertex)
             added["weight"] = "starts at"
             added["literal_included"] = "To"
 
-            added = knowledge_graph.add_edge(myny_rel, end_vertex)
+            added = knowledge_graph.add_edge(mu_nu_vertex, upper_mu_vertex)
             added["weight"] = "ends at"
             added["literal_included"] = "To"
 
-            added = knowledge_graph.add_edge(myny_rel, value_vertex)
-            added["weight"] = "quantified by"
+            added = knowledge_graph.add_edge(mu_nu_vertex, nu_vertex)
+            added["weight"] = f"{pq_relation.quantified_conclusion_prefix} quantified by"
             added["literal_included"] = "To"
             count += 1
 
-    def add_relation(self, pq_tuple, knowledge_graph, action, bins, bin_values, with_shortcut):
+    def add_relation(
+        self,
+        pq_relation: PQ_Relation,
+        knowledge_graph: Graph,
+        with_shortcut: bool,
+        flip_quantified_by: bool,
+        additional_flipped_quantified_by: bool
+    ):
         """Adds a relation in the quantified_conditions style to a graph
 
         Args:
-            pq_tuple (tuple(parameter : str, qualtiy : str)): the pq-relation to add
+            pq_relation (PQ_Relation): the pq-relation to add
             knowledge_graph (iGraph.Graph): the knowledge graph who should be expanded
             with_shortcut (bool): wether a high level relation between p and q should be generated additionally
         """
-        parameter = pq_tuple[0]
-        quality = pq_tuple[1]
+        parameter = pq_relation.parameter
+        quality = pq_relation.quality
+        bin_values = pq_relation.conclusion_quantifications
 
         uid = 0
-        for i in range(len(bins)):
-            # Check which bin edge is lower and then set the start point to the
-            # lower boundary
-            if bins[i][0] < bins[i][1]:
-                start_point = bins[i][0]
-                end_point = bins[i][1]
-            elif bins[i][0] > bins[i][1]:
-                start_point = bins[i][1]
-                end_point = bins[i][0]
-                
-            value = str(bins[i]) + "-for-" + parameter + "-" + quality + "|" + str(uid)
+        for i, _bin in enumerate(pq_relation.condition_scopes):
+            start_point = min(_bin)
+            end_point = max(_bin)
+
+            value = f'{_bin}-for-{parameter}-{quality}|{uid}'
             uid += 1
-            bin = (
-                ("µ_" + str(i) + ": " + str(start_point) + "-" + str(end_point))
-                + "-for-"
-                + parameter
-                + "-"
-                + quality
-            )
-            bin_start = (
-                str(start_point) + "-for-" + parameter + "-" + quality + "|" + str(uid)
-            )
+            bin_name = f'µ_{i}: {start_point}-{end_point}-for-{parameter}-{quality}'
+            bin_start = f'{start_point}-for-{parameter}-{quality}|{uid}'
             uid += 1
-            bin_end = (
-                str(end_point) + "-for-" + parameter + "-" + quality + "|" + str(uid)
-            )
+            bin_end = f'{end_point}-for-{parameter}-{quality}|{uid}'
             uid += 1
 
-            value_vertex = add_vertex_to_graph(knowledge_graph, value)
+            nu_vertex = add_vertex_to_graph(knowledge_graph, value)
             # new vertices are appended to a list, get the end of the list to get the vertex object
-            value_vertex["type"] = "quantified_conclusion"
-            value_vertex["literal_value"] = str(bin_values[i])
+            nu_vertex["type"] = "quantified_conclusion"
+            nu_vertex["literal_value"] = str(bin_values[i])
+            nu_vertex["is_relative_value"] = pq_relation.action == PQ_Relation.Action.ADJUST
 
-            bin_vertex = add_vertex_to_graph(knowledge_graph, bin)
-            bin_vertex["type"] = "quantified_condition"
+            mu_vertex = add_vertex_to_graph(knowledge_graph, bin_name)
+            mu_vertex["type"] = "quantified_condition"
 
-            start_vertex = add_vertex_to_graph(knowledge_graph, bin_start)
-            start_vertex["type"] = "value"
-            start_vertex["literal_value"] = str(start_point)
+            lower_mu_ver = add_vertex_to_graph(knowledge_graph, bin_start)
+            lower_mu_ver["type"] = "value"
+            lower_mu_ver["literal_value"] = str(start_point)
 
-            end_vertex = add_vertex_to_graph(knowledge_graph, bin_end)
-            end_vertex["type"] = "value"
-            end_vertex["literal_value"] = str(end_point)
+            upper_mu_ver = add_vertex_to_graph(knowledge_graph, bin_end)
+            upper_mu_ver["type"] = "value"
+            upper_mu_ver["literal_value"] = str(end_point)
 
             # Add edges between the added vertices
-            added = knowledge_graph.add_edge(bin_vertex, value_vertex)
+            added = knowledge_graph.add_edge(mu_vertex, nu_vertex)
             added["weight"] = "implies"
             added["literal_included"] = "To"
-            added = knowledge_graph.add_edge(parameter, value_vertex)
-            added["weight"] = "quantified by"
-            added["literal_included"] = "To"
-            added = knowledge_graph.add_edge(bin_vertex, start_vertex)
+            if flip_quantified_by or additional_flipped_quantified_by:
+                added = knowledge_graph.add_edge(nu_vertex, parameter)
+                added["weight"] = f"{pq_relation.quantified_conclusion_prefix} quantifies"
+                added["literal_included"] = "From"
+            if not flip_quantified_by or additional_flipped_quantified_by:
+                added = knowledge_graph.add_edge(parameter, nu_vertex)
+                added["weight"] = f"{pq_relation.quantified_conclusion_prefix} quantified by"
+                added["literal_included"] = "To"
+            added = knowledge_graph.add_edge(mu_vertex, lower_mu_ver)
             added["weight"] = "starts at"
             added["literal_included"] = "To"
-            added = knowledge_graph.add_edge(bin_vertex, end_vertex)
+            added = knowledge_graph.add_edge(mu_vertex, upper_mu_ver)
             added["weight"] = "ends at"
             added["literal_included"] = "To"
-            added = knowledge_graph.add_edge(quality, bin_vertex)
+            added = knowledge_graph.add_edge(quality, mu_vertex)
             added["weight"] = "quantified by"
             added["literal_included"] = "None"
         if with_shortcut:
             added = knowledge_graph.add_edge(quality, parameter)
-            added["weight"] = action
+            added["weight"] = "implies"
             added["literal_included"] = "None"

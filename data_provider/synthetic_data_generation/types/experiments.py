@@ -35,6 +35,12 @@ class GeneratedExperiment:
     qualities: Dict[str, float]
     """Dictionary containing the quality ratings of the experiment"""
 
+    optimized_qualities: Optional[List[str]] = None
+    """List of qualities that got optimized in comparision to the previous iteration"""
+
+    adjusted_parameters: Optional[List[str]] = None
+    """List of parameters that got adjusted in comparision to the previous iteration"""
+
     experiment_id: int = field(default_factory=count().__next__)
     """Unique id of the experiment"""
 
@@ -68,11 +74,19 @@ class GeneratedExperimentSeries:
     generation_approach: str
     """Generator used to generate this experiment series"""
 
-    optimized_qualities: List[str] = field(default_factory=lambda: [])
-    """List of qualities that get optimized in this experiment series"""
-
     experiment_series_id: int = field(default_factory=count().__next__)
     """Unique id of the experiment series"""
+
+    @property
+    def optimized_qualities(self) -> List[str]:
+        """List of qualities that get optimized in this experiment series"""
+        return list(
+            reduce(
+                lambda qualties, new_qualities: qualties | set(new_qualities),
+                [e.optimized_qualities for e in self.experiments],
+                set()
+            )
+        )
 
     def __len__(self):
         return len(self.experiments)

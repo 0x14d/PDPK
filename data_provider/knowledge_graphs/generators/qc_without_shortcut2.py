@@ -5,16 +5,18 @@ from data_provider.knowledge_graphs.generators.abstract_knowledge_graph_generato
 from data_provider.synthetic_data_generation.types.generator_arguments import KnowledgeGraphGeneratorArguments
 from data_provider.knowledge_graphs.generators.qc_super import QC_super
 
-
-class QcW3(KnowledgeGraphGenerator, QC_super):
+class QcWithoutShortcut2(KnowledgeGraphGenerator, QC_super):
     """
     Class that provides functionality to generate knowledge graphs that display
-    a quantified_conditions relations using the w3 pattern for graphs with n-ary relations.
+    a quantified conditions like relation missing a high level pq-relation.
+    The edge between the parameter and its quantification is implemented
+    via a "quantifies" relation instead of a "quantified by" relation.
     """
-
     def __init__(self, args: KnowledgeGraphGeneratorArguments) -> None:
         KnowledgeGraphGenerator.__init__(self)
-        QC_super.__init__(self, args)
+        QC_super.__init__(self,args)
 
     def generate_knowledge_graph(self) -> Graph:
-        return QC_super.generalized_generate_knowledge_graph(self, with_shortcut=True, w3=True)
+        return QC_super.generalized_generate_knowledge_graph(
+            self,with_shortcut=False, flip_quantified_by=True
+        )

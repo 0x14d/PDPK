@@ -4,14 +4,17 @@ This module provides the class `ExpertKnowledgeExperimentSeriesGenerator`.
 
 # pylint: disable=relative-beyond-top-level, import-error, too-many-locals, too-few-public-methods, useless-super-delegation
 
+from itertools import product
 from math import floor
 from typing import List
+
 from data_provider.synthetic_data_generation.config.modules.experiment_series_generator_config \
     import ExpertKnowledgeExperimentSeriesGeneratorConfig
 from data_provider.synthetic_data_generation.types.experiments import GeneratedExperimentSeries
 from data_provider.synthetic_data_generation.types.generator_arguments \
     import ExperimentSeriesGeneratorArguments
-from .abstract_experiment_series_generator import ExperimentSeriesGenerator
+from data_provider.synthetic_data_generation.modules.experiment_series_generators. \
+    abstract_experiment_series_generator import ExperimentSeriesGenerator
 
 
 class ExpertKnowledgeExperimentSeriesGenerator(ExperimentSeriesGenerator):
@@ -21,6 +24,9 @@ class ExpertKnowledgeExperimentSeriesGenerator(ExperimentSeriesGenerator):
     Each experiment series optimizes a set of qualities by using the expert knowledge.
     It starts with a random initialized experiment and in each step all parameters that are
     known to influence the qualities are optimized until all parameters reach a certain threshold.
+
+    The used expert knowledge not only consists of real knowledge but also noised knowledge that
+    doesn't represent the real correlations.
     """
 
     _config: ExpertKnowledgeExperimentSeriesGeneratorConfig
@@ -57,28 +63,62 @@ class ExpertKnowledgeExperimentSeriesGenerator(ExperimentSeriesGenerator):
         """
         experiments = [self._generate_first_experiment(qualities)]
 
-        adjusted_parameters = self._pq_tuples.get_expert_knowledge_for_qualities(qualities)
+    	# Filter expert knowledge for the optimized qualities
+        expert_knowledge = [(p, q) for p, q in self._pq_tuples.expert_knowledge if q in qualities]
+        expert_knowledge_size = len(expert_knowledge)
+
+        # Choose unnoised expert knowledge
+        expert_knowledge = self._rng.choice(
+            expert_knowledge,
+            round(expert_knowledge_size * (1 - self._config.noise_proportion)),
+            replace=False
+        )
+        expert_knowledge = [tuple(pq) for pq in expert_knowledge]
+
+        # Generate all pq-tuples for the optimized qualities that aren't in the expert knowledge
+        expert_knowledge_noise = [
+            (p, q) for p, q
+            in product(self._pq_tuples.selected_parameters, self._pq_tuples.selected_qualities)
+            if (p, q) not in self._pq_tuples.expert_knowledge and q in qualities
+        ]
+
+        # Choose noised expert knowledge
+        expert_knowledge_noise = self._rng.choice(
+            expert_knowledge_noise,
+            round(expert_knowledge_size * self._config.noise_proportion),
+            replace=False
+        )
+        expert_knowledge_noise = [tuple(pq) for pq in expert_knowledge_noise]
+
+        # Generate the pq-functions for the noised expert knowledge
+        pq_functions_noise = self._pq_function_generator.generate_pq_functions(
+            expert_knowledge_noise)
+
+        expert_knowledge_all = expert_knowledge + expert_knowledge_noise
+        pq_functions_all = {**self._pq_functions.pq_functions, **pq_functions_noise.pq_functions}
+        adjusted_parameters = set(p for p, _ in expert_knowledge_all)
+
         while True:
             old_experiment = experiments[-1]
             new_parameters = old_experiment.parameters.copy()
 
             for parameter in adjusted_parameters:
                 old_p = old_experiment.parameters[parameter]
-                affected_qualities = set(self._pq_tuples.get_expert_knowledge_for_parameter(parameter)) \
-                                     & set(qualities)
+                affected_qualities = set(q for (p, q) in expert_knowledge_all if p == parameter) & \
+                                     set(qualities)
 
                 # Calculate delta_p as mean over all qualities
                 delta_p = 0
                 for quality in affected_qualities:
-                    pq_function = self._pq_functions.pq_functions[(parameter, quality)]
-
                     if self._config.score_threshold >= \
                        self._calculate_quality_score(old_experiment.parameters, [quality]):
                         # Parameter is good enough
                         continue
 
+                    pq_function = pq_functions_all[(parameter, quality)]
                     old_q = old_experiment.qualities[quality]
-                    delta_p += pq_function.inverse_derivation(old_q, last_parameter=old_p)
+                    delta_p += pq_function.inverse_derivation(
+                        old_q, last_parameter=old_p)
 
                 # Choose next parameter value TODO: Maybe add different approaches
                 delta_p /= len(affected_qualities)
@@ -90,16 +130,25 @@ class ExpertKnowledgeExperimentSeriesGenerator(ExperimentSeriesGenerator):
 
                 new_parameters[parameter] = new_p
 
-            if len(experiments) > 1 and \
-               self._calculate_quality_score(new_parameters, qualities) >= \
+            new_experiment = self._generate_experiment(
+                new_parameters, old_experiment.qualities, qualities, old_experiment)
+            experiments.append(new_experiment)
+
+            if self._calculate_quality_score(new_experiment.parameters, qualities) > \
                self._calculate_quality_score(old_experiment.parameters, qualities):
+                # Quit if score gets worse
                 break
 
-            new_experiment = self._generate_experiment(new_parameters, old_experiment.qualities)
-            experiments.append(new_experiment)
+            if len(experiments) >= 3 and \
+               self._calculate_quality_score(experiments[-1].parameters, qualities) == \
+               self._calculate_quality_score(experiments[-2].parameters, qualities) == \
+               self._calculate_quality_score(experiments[-3].parameters, qualities):
+                # Quit if the score is the same three times
+                break
 
             if self._config.score_threshold >= \
                self._calculate_quality_score(new_parameters, qualities):
+                # Quit if score threshold is reached
                 break
 
         if len(experiments) > self._config.max_series_size:
@@ -114,6 +163,5 @@ class ExpertKnowledgeExperimentSeriesGenerator(ExperimentSeriesGenerator):
 
         return GeneratedExperimentSeries(
             experiments=experiments,
-            generation_approach=self._config.type,
-            optimized_qualities=qualities
+            generation_approach=self._config.type
         )

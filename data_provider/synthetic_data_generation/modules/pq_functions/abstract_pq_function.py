@@ -32,6 +32,14 @@ class PQFunction(ABC):
         """Number of the functions coefficients"""
         raise NotImplementedError('NUM_COEFFS is not defined!')
 
+    @property
+    @abstractmethod
+    def direction(self) -> int:
+        """
+        Direction of the function
+        """
+        raise NotImplementedError('direction is not defined!')
+
     _function: Callable[[Union[Number, ArrayLike], Dict[str, Any]], Union[Number, ArrayLike]]
     _derivation: Callable[[Union[Number, ArrayLike], Dict[str, Any]], Union[Number, ArrayLike]]
     _inverse: Callable[[Union[Number, ArrayLike], Dict[str, Any]], Union[Number, ArrayLike]]

@@ -8,8 +8,10 @@ from sys import float_info
 from math import log
 from numbers import Number
 from typing import Callable, Optional, Tuple, Union
+
 from numpy.random import Generator
 from numpy.typing import ArrayLike
+
 from data_provider.synthetic_data_generation.config.basic_configs.parameter_config import Parameter
 from data_provider.synthetic_data_generation.config.basic_configs.quality_config import Quality
 from .abstract_pq_function import PQFunction
@@ -66,6 +68,10 @@ class LogarithmicPQFunction(PQFunction):
         def inverse_derivation(x: Number) -> Number:
             return (b ** ((x - d) / a) * log(b)) / a
         self.__inverse_derivation = self._create_function_with_array_handling(inverse_derivation)
+
+    @property
+    def direction(self) -> int:
+        return 1 if self._coeffs[1] >= 2 else -1
 
     def _function(self, param: Union[Number, ArrayLike], **kwargs) -> Union[Number, ArrayLike]:
         return self.__function(param)

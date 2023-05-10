@@ -60,7 +60,8 @@ class BasicKnowledgeGraphGenerator(KnowledgeGraphGenerator):
             added = add_vertex_to_graph(knowledge_graph, pq_tuple.parameter)
             added["type"] = "parameter"
 
-            edge = knowledge_graph.add_edge(pq_tuple.quality, pq_tuple.parameter)
-            edge["weight"] = pq_tuple.conclusion_quantifications
+            edge = knowledge_graph.add_edge(
+                pq_tuple.quality, pq_tuple.parameter)
+            edge["weight"] = pq_tuple.conclusion_quantification_mean
 
         return knowledge_graph

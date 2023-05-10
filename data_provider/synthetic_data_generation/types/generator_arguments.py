@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from data_provider.synthetic_data_generation.config.modules.experiment_series_generator_config \
     import ExperimentSeriesGeneratorConfig
 from data_provider.synthetic_data_generation.config.sdg_config import SdgConfig
+from data_provider.synthetic_data_generation.modules.pq_function_generators. \
+    abstract_pq_function_generator import PQFunctionGenerator
 from data_provider.synthetic_data_generation.types.pq_function import GeneratedPQFunctions
 from data_provider.synthetic_data_generation.types.pq_tuple import GeneratedPQTuples
 from data_provider.knowledge_graphs.pq_relation import GeneratedPQ_Relations
@@ -27,6 +29,9 @@ class ExperimentGeneratorArguments:
 
     pq_functions: GeneratedPQFunctions
     """Generated pq-functions"""
+
+    pq_function_generator: PQFunctionGenerator
+    """Generator used to create the pq-functions"""
 
     pq_tuples: GeneratedPQTuples
     """Genertated pq-tuples (correlations, expert knowledge etc.)"""
@@ -47,6 +52,9 @@ class ExperimentSeriesGeneratorArguments:
 
     pq_functions: GeneratedPQFunctions
     """Generated pq-functions"""
+
+    pq_function_generator: PQFunctionGenerator
+    """Generator used to create the pq-functions"""
 
     pq_tuples: GeneratedPQTuples
     """Genertated pq-tuples (correlations, expert knowledge etc.)"""
@@ -79,19 +87,6 @@ class NoiseGeneratorArguments:
 
     sdg_config: SdgConfig
     """Configuration of the synthetic data generator"""
-
-@dataclass
-class PQFunctionGeneratorArguments:
-    """
-    This class contains the informations that get passed into the init method of the
-    pq-function-generators.
-    """
-
-    sdg_config: SdgConfig
-    """Configuration of the synthetic data generator"""
-
-    pq_tuples: GeneratedPQTuples
-    """Genertated pq-tuples (correlations, expert knowledge etc.)"""
 
 @dataclass
 class PQTupleGeneratorArguments:

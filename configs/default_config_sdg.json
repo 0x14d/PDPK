@@ -27,11 +27,12 @@
             "only_optimize_qualities_with_overlapping_parameters": false,
             "quality_calculation_method": "mean",
             "score_threshold": 0.05,
+            "noise_proportion": 0,
             "seed": 42
         }
     },
     "knowledge_graph_generator": {
-        "type": "basic",
+        "type": "quantified_parameters_with_shortcut",
         "edge_weight": "mean_absolute",
         "knowledge_share": 1.0,
         "seed": 42

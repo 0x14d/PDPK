@@ -42,40 +42,42 @@ class QuantifiedParametersW3(KnowledgeGraphGenerator):
         knowledge_graph = Graph(directed=True)
 
         num_included = int(len(self._relations) * self._config.knowledge_share)
-        pq_tuples_included: List[PQ_Relation] = self._rng.choice(
+        pq_relations_included: List[PQ_Relation] = self._rng.choice(
             a=self._relations, size=num_included, replace=False
         )
 
-        for pq_tuple in pq_tuples_included:
-            added = add_vertex_to_graph(knowledge_graph, pq_tuple.quality)
+        for pq_relation in pq_relations_included:
+            added = add_vertex_to_graph(knowledge_graph, pq_relation.quality)
             added["type"] = "qual_influence"
 
-            added = add_vertex_to_graph(knowledge_graph, pq_tuple.parameter)
+            added = add_vertex_to_graph(knowledge_graph, pq_relation.parameter)
             added["type"] = "parameter"
 
-            parameter = pq_tuple.parameter
-            quality = pq_tuple.quality
+            parameter = pq_relation.parameter
+            quality = pq_relation.quality
 
-            edge_weight= pq_tuple.conclusion_quantifications
+            edge_weight = pq_relation.conclusion_quantification_mean
 
             quant = add_vertex_to_graph(knowledge_graph, edge_weight)
             quant['type'] = "value"
             quant['literal_value'] = edge_weight
+            quant['corresponding_parameter'] = parameter
+            quant["is_relative_value"] = pq_relation.action == PQ_Relation.Action.ADJUST
 
-            tenary_name = parameter + "-" + quality + "-relation"
-            tenary = add_vertex_to_graph(knowledge_graph, tenary_name)
+            pq_rel_vert_name = parameter + "-" + quality + "-relation"
+            pq_vert = add_vertex_to_graph(knowledge_graph, pq_rel_vert_name)
+            pq_vert['type'] = "pq-relation"
 
-            added=knowledge_graph.add_edge(quality, tenary)
+            added = knowledge_graph.add_edge(quality, pq_vert)
             added["weight"] = "implies"
             added["literal_included"] = "None"
 
-            added=knowledge_graph.add_edge(tenary, parameter)
+            added = knowledge_graph.add_edge(pq_vert, parameter)
             added['weight'] = "implied parameter"
             added["literal_included"] = "None"
 
-            added = knowledge_graph.add_edge(tenary, quant)
-            added['weight'] = "quantified by"
+            added = knowledge_graph.add_edge(pq_vert, quant)
+            added['weight'] = f"{pq_relation.quantified_conclusion_prefix} quantified by"
             added['literal_included'] = "To"
 
         return knowledge_graph
-

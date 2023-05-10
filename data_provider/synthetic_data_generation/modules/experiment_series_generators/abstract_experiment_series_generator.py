@@ -22,6 +22,8 @@ from data_provider.synthetic_data_generation.config.modules. \
 from data_provider.synthetic_data_generation.config.modules.experiment_series_generator_config \
     import ExperimentSeriesGeneratorQualityCalculationMethod as QualityCalculationMethod
 from data_provider.synthetic_data_generation.config.sdg_config import SdgConfig
+from data_provider.synthetic_data_generation.modules.pq_function_generators. \
+    abstract_pq_function_generator import PQFunctionGenerator
 from data_provider.synthetic_data_generation.types.experiments \
     import GeneratedExperiment, GeneratedExperimentSeries
 from data_provider.synthetic_data_generation.types.generator_arguments \
@@ -38,12 +40,14 @@ class ExperimentSeriesGenerator(ABC):
     _sdg_config: SdgConfig
     _pq_tuples: GeneratedPQTuples
     _pq_functions: GeneratedPQFunctions
+    _pq_function_generator: PQFunctionGenerator
     _rng: Generator
 
     def __init__(self, args: ExperimentSeriesGeneratorArguments) -> None:
         self._config = args.experiment_series_config
         self._sdg_config = args.sdg_config
         self._pq_functions = args.pq_functions
+        self._pq_function_generator = args.pq_function_generator
         self._pq_tuples = args.pq_tuples
         self._rng = rng(self._config.seed)
 
@@ -60,10 +64,12 @@ class ExperimentSeriesGenerator(ABC):
         """
 
     def _generate_experiment(
-            self,
-            parameters: Dict[str, float],
-            qualities: Dict[str, float]
-        ) -> GeneratedExperiment:
+        self,
+        parameters: Dict[str, float],
+        qualities: Dict[str, float],
+        optimized_qualities: Optional[List[str]] = None,
+        previous_experiment: Optional[GeneratedExperiment] = None
+    ) -> GeneratedExperiment:
         """
         Generates an experiment from the given parameter and quality values.
 
@@ -73,6 +79,10 @@ class ExperimentSeriesGenerator(ABC):
             parameters (dict): Parameter values
             qualities (dict): Quality ratings. All qualities that don't have a
                 correct value will be calculated again.
+            optimized_qualities (list, optional): List of qualities that are optimized
+                in this experiment
+            previous_experiment (GeneratedExperiment, optional): Previous experiment in
+                the experiment series
 
         Returns:
             Generated experiment
@@ -85,9 +95,24 @@ class ExperimentSeriesGenerator(ABC):
             if rating is not None:
                 qualities[quality] = rating
 
+        if previous_experiment is not None:
+            adjusted_parameters = [
+                p for p in parameters.keys() if parameters[p] != previous_experiment.parameters[p]
+            ]
+            optimized_qualities = [
+                q for q in optimized_qualities
+                if self._calculate_quality_score(
+                    previous_experiment.parameters, [q]
+                ) > self._config.score_threshold
+            ]
+        else:
+            adjusted_parameters, optimized_qualities = None, None
+
         return GeneratedExperiment(
             parameters=parameters,
-            qualities=qualities
+            qualities=qualities,
+            adjusted_parameters=adjusted_parameters,
+            optimized_qualities=optimized_qualities
         )
 
     def _calculate_quality_rating(
@@ -294,7 +319,7 @@ class ExperimentSeriesGenerator(ABC):
             quality_config = self._sdg_config.get_quality_by_name(quality)
             if quality in qualities_to_optimize:
                 if self._config.initial_quality_rating == InitialQualityRating.WORST:
-                    quality_offset = (quality_config.max_rating - quality_config.min_rating) * 0.1
+                    quality_offset = (quality_config.max_rating - quality_config.min_rating) * 0.2
                     quality_offset = self._rng.uniform(low=0, high=quality_offset)
                     qualities[quality] = quality_config.max_rating - quality_offset
                 elif self._config.initial_quality_rating == InitialQualityRating.RANDOM:

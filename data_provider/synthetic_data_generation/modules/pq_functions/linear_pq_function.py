@@ -6,9 +6,11 @@ This module provides the class `LinearPQFunction`
 
 from numbers import Number
 from typing import Optional, Tuple, Union
+
 from numpy.polynomial.polynomial import Polynomial
 from numpy.random import Generator
 from numpy.typing import ArrayLike
+import numpy as np
 
 from data_provider.synthetic_data_generation.config.basic_configs.parameter_config import Parameter
 from data_provider.synthetic_data_generation.config.basic_configs.quality_config import Quality
@@ -51,6 +53,10 @@ class LinearPQFunction(PQFunction):
         self.__inverse = Polynomial([a, b])
 
         self.__inverse_derivation = self.__inverse.deriv()
+
+    @property
+    def direction(self) -> int:
+        return np.sign(self._coeffs[1])
 
     def _function(self, param: Union[Number, ArrayLike], **kwargs) -> Union[Number, ArrayLike]:
         return self.__function(param)

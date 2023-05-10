@@ -1,10 +1,13 @@
+"""This module contains the class `Rule`"""
+
 from __future__ import annotations
 
-import math
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from distutils import util
 from enum import unique, Enum
-from typing import Union
-
+from typing import Any, Dict, Tuple, Union, Optional, List
+import math
 import numpy as np
 import pandas as pd
 import parse
@@ -12,21 +15,35 @@ import parse
 from utils.preprocessing import LabelEncoderForColumns
 
 
-class Rule:
+@dataclass(frozen=True)
+class Rule(ABC):
+    """
+    Represents a rule in the form of `if condition occurs execute conclusion`
+    """
 
-    CONDITION_THRESHOLD = 0.9
-    # for equality, the intersection-over-union of the condition ranges is calculated.\
-    # IoU values above this threshold are considered equal
     PREDICTION_THRESHOLD = 0.30
-    # the relative tolerance for two numerical values to be considered equal
+    """The relative tolerance for two numerical values to be considered equal"""
+
+    BIOU_THRESHOLD = 0.7
+    """
+    For lowlevel equality, the bound intersection-over-union of two intervals is calculated.
+    BIoU values above this threshold are considered equal.
+    """
 
     @unique
     class Action(Enum):
+        """
+        Enum that contains the different types of actions (parameter adjustments) 
+        """
         UNDEFINED = 0,
         INCREASE_INCREMENTALLY = 1,
+        """Increase the paramater incrementally by the step size"""
         DECREASE_INCREMENTALLY = 2,
+        """Decrease the paramater incrementally by the step size"""
         ADJUST_INCREMENTALLY = 3,
+        """Adjust the parameter incrementally without knowing the direction and step size"""
         SET = 4,
+        """Set the parameter to the a specific value"""
         ADJUST_HARDWARE = 5,
 
         def __str__(self):
@@ -34,209 +51,362 @@ class Rule:
 
         @classmethod
         def from_string(cls, action: str):
+            """Converts an action in form of a string to its enum counterpart"""
             action = action.strip().replace(" ", "_").upper()
             enum = cls[action]
             return enum
 
     @unique
     class ParamType(Enum):
+        """Enum that contains the different types of parameter datatypes"""
         UNKNOWN = 0
         NUMERICAL = 1
         BOOLEAN = 2
         STRING = 3
 
-    def __init__(self, label_encoder: LabelEncoderForColumns):
-        # TODO wouldn't it be better to initialze everything in the constructor already? make sure everythings set up correctly? \
-        # including parameter type selection? or using a Builder pattern
-        self.condition = str()  # what is the reason for a specific action
-        # discretized bin in which the value of the condition lies
-        self.condition_range: tuple[float, float] = (np.nan, np.nan)
-        self.action = Rule.Action.UNDEFINED  # what to do with the cura parameter
-        self.parameter = str()  # cura parameter
-        self.mean_value = float()  # mean value of the parameter in the graph
-        # lower limit for range of values to set the parameter
-        self.range_start: float = float()
-        self.range_end = float()  # upper limit for range of values to set the parameter
-        # TODO XAI-558 is it possible to combine step_size and action_quantifier? (probably easier if we use inheritance)
-        # We have two options here: leave it as float/bool and transform to string in tostr or place allow string values -> currently the first is implemented
-        self.action_quantifier: Union[None, bool, int] = None
-        # step size to increase/decrease incrementally a certain parameter
-        self.step_size = float()
-        # type of the rule TODO XAI-587 does it make sense to use inheritance to handle different behaviour for categorical/numerical rules?
-        self.parameter_type: Rule.ParamType | None = None
-        self._label_encoder: LabelEncoderForColumns = label_encoder
+    condition: str
+    """What is the reason for a specific action"""
 
-    def __eq__(self, other):
-        # TODO should this be replaced by a proper check on all properties?
-        return Rule.lowlevel_eq(self, other)
+    parameter: str
+    """Parameter that is adjusted"""
 
-    def __hash__(self):
+    parameter_type: Rule.ParamType
+    """Datatype of the parameter"""
+
+    label_encoder: LabelEncoderForColumns
+    """Encoder used to encocer string values"""
+
+    parameter_range: Optional[Tuple[float, float]] = None
+    """Lower and upper limit for range of values to set the parameter (only numerical set action)"""
+
+    absolute_mean_value: Optional[float] = None
+    """Absolute mean value of the parameter in the graph (only numerical)"""
+
+    relative_mean_value: Optional[float] = None
+    """
+    Step size to increase/decrease incrementally a certain parameter.
+    (only numerical incremental action)
+    """
+
+    action_quantifier: Optional[Union[bool, int]] = None
+    """Quantification of the action (only bool + string)"""
+
+    action: Rule.Action = None
+    """What to do with the cura parameter"""
+
+    def __post_init__(self) -> None:
+        """
+        Sets the action if none was provided.
+
+        For numerical rules relative adjustment actions are preferred.
+        If no relative values are provided absolute adjustment or
+        range adjustments actions are used.
+        """
+        if self.action is None:
+            if self.relative_mean_value is not None and self.relative_mean_value > 0:
+                action = Rule.Action.INCREASE_INCREMENTALLY
+            elif self.relative_mean_value is not None and self.relative_mean_value < 0:
+                action = Rule.Action.DECREASE_INCREMENTALLY
+            elif self.parameter_range is not None and \
+                    math.isclose(self.parameter_range[0], self.parameter_range[1]):
+                action = Rule.Action.SET
+            elif self.action_quantifier is not None:
+                action = Rule.Action.SET
+            else:
+                action = Rule.Action.ADJUST_INCREMENTALLY
+            super().__setattr__('action', action)
+
+    def __str__(self) -> str:
+        return f'{self.condition_string} {self.conclusion_string}'
+
+    def __hash__(self) -> int:
         return hash(self.__str__())
 
-    def __str__(self):
-        string = ""
-        if math.isnan(self.step_size) and math.isnan(self.range_start) and math.isnan(self.range_end):
-            string = ""
-        elif abs(self.step_size) > 0:
-            string = f' by {round(abs(self.step_size), 2)}'
+    def __eq__(self, other) -> bool:
+        # TODO should this be replaced by a proper check on all properties?
+        return Rule.lowlevel_conclusion_eq(self, other)
+
+    @property
+    @abstractmethod
+    def condition_string(self) -> str:
+        """String representation of the condition"""
+        pass
+
+    @property
+    def conclusion_string(self) -> str:
+        """String representation of the conclusion"""
+        if self.relative_mean_value is not None and abs(self.relative_mean_value) > 0:
+            target = f'by {round(abs(self.relative_mean_value), 2)}'
             # TODO XAI-607 enable after allowing mutliple conditions to get more meaningful ranges
             # if self.range_start != self.range_end:
             # additional_string = f' by {round(abs(self.step_size), 2)} in range {round(self.range_start, 2)} to {round(self.range_end, 2)}'
         elif self.action_quantifier is not None:
             if self.parameter_type == Rule.ParamType.STRING:
-                string = f' to {self._label_encoder.inverse_transform(self.action_quantifier, self.parameter)}'
+                target = f'to {self.label_encoder.inverse_transform(self.action_quantifier, self.parameter)}'
             else:
-                string = f' to {self.action_quantifier}'
-        else:
-            if math.isclose(self.range_start, self.range_end):
-                string = f' to {round(self.range_start, 2)}'
+                target = f'to {self.action_quantifier}'
+        elif self.parameter_range is not None:
+            if math.isclose(self.parameter_range[0], self.parameter_range[1]):
+                target = f'to {round(self.parameter_range[0], 2)}'
             else:
-                string = f' in range {round(self.range_start, 2)} to {round(self.range_end, 2)}'
-        additional_string = string
-
-        return f"If you encounter {self.condition} in [{self.condition_range[0]}, {self.condition_range[1]}], try to {str(self.action)} the " \
-               f"parameter {self.parameter}" + additional_string
-
-    def is_given_relation(self, influence, parameter):
-        if influence == self.condition and parameter == self.parameter:
-            return True
+                target = f'in range {round(self.parameter_range[0], 2)} ' + \
+                         f'to {round(self.parameter_range[1], 2)}'
         else:
+            target = ""
+        return f'try to {str(self.action)} the parameter {self.parameter} {target}'
+
+    @staticmethod
+    def highlevel_eq(rule_a: Rule, rule_b: Rule) -> bool:
+        """Compares if two rules have the same parameter and condition"""
+        return rule_a.parameter == rule_b.parameter and \
+            rule_a.condition == rule_b.condition
+
+    @staticmethod
+    def midlevel_eq(rule_a: Rule, rule_b: Rule) -> bool:
+        """Compares if two rules are highlevel equal and also contain the same action"""
+        if not Rule.highlevel_eq(rule_a, rule_b):
+            return False
+        return rule_a.action == rule_b.action
+
+    @staticmethod
+    def lowlevel_conclusion_eq(rule_a: Rule, rule_b: Rule) -> bool:
+        """
+        Compares if the conclusions of two rules are lowlevel equal.
+
+        - When comparing numerical values with other numerical values
+          the relative distance must be < than `PREDICTION_THRESHOLD`
+        - When comparing numerical values with intervals the value must
+          either be inside the interval or the relative distance between
+          it and one interval bound must be < than `PREDICTION_THRESHOLD / 2`
+        - When comparing two numerical intervals the biou must be > than `BIOU_THRESHOLD`
+        - When comparing string or boolean rules the action quantifiers must be equal
+        """
+        if not Rule.midlevel_eq(rule_a, rule_b):
+            return False
+        if not rule_b.is_low_level_conclusion_comparable() or \
+           not rule_a.is_low_level_conclusion_comparable():
             return False
 
-    def is_low_level_comparable(self):
+        distance = Rule.low_level_conclusion_distance(rule_a, rule_b)
+        if rule_b.relative_mean_value not in [0, None] and \
+           rule_a.relative_mean_value not in [0, None]:
+            return distance < Rule.PREDICTION_THRESHOLD
+        if rule_a.parameter_range is not None and rule_b.parameter_range is not None:
+            rule_a_set = math.isclose(*rule_a.parameter_range)
+            rule_b_set = math.isclose(*rule_b.parameter_range)
+            if rule_a_set and rule_b_set:
+                return distance < Rule.PREDICTION_THRESHOLD
+            elif any([rule_a_set, rule_b_set]):
+                return distance < Rule.PREDICTION_THRESHOLD / 2
+            else:
+                return distance > Rule.BIOU_THRESHOLD
+        return distance == 0
+
+    @staticmethod
+    def lowlevel_eq(rule_a: Rule, rule_b: Rule) -> bool:
+        """Compares if two rules are lowlevel equal"""
+        return rule_a == rule_b
+
+    def is_low_level_conclusion_comparable(self) -> bool:
         """
-        if there is any possibility to compare the current rule to another on low level e.g. if the step size is in the same range this function should return True
+        if there is any possibility to compare the current rule to another on conclusion low level
+        e.g. if the step size is in the same range this function should return True
         """
-        if abs(self.step_size) > 0:
+        if self.relative_mean_value is not None and abs(self.relative_mean_value) > 0:
             return True
-        elif not math.isclose(self.range_start, self.range_end):
+        if self.absolute_mean_value is not None and abs(self.absolute_mean_value) > 0:
+            return True
+        if self.parameter_range is not None and not math.isclose(self.parameter_range[0], self.parameter_range[1]):
             # TODO XAI-558 range_start == range_end should return true
             return True
-        elif not (self.action_quantifier is None):
+        if self.action_quantifier is not None:
             return True
-        elif self.condition_range[0] != self.condition_range[1] and self.condition_range != np.nan:
-            return True
-        else:
-            return False
+        return False
 
-    @classmethod
-    def from_string(cls, string: str, label_encoder: LabelEncoderForColumns):
-        rule = cls(label_encoder)
-        result = parse.parse(
-            "If you encounter {} in [{}, {}], try to {} the parameter {} by {}", string)
-        categorical_rule = False
-        range_rule = False
-        if result is None:
-            range_rule = True
-            result = parse.parse(
-                "If you encounter {} in [{}, {}], try to {} the parameter {} in range {} to {}", string)
-            if result is None:
-                categorical_rule = True
-                range_rule = False
-                parsed_condition, parsed_condition_lower, parsed_condition_upper, parsed_action, parsed_parameter, parsed_step = parse.parse(
-                    "If you encounter {} in [{}, {}], try to {} the parameter {} to {}", string)
+    @staticmethod
+    def bounded_intersection_over_union(interval_a: Tuple[float, float], interval_b: Tuple[float, float]) -> float:
+        """Calculates the bound intersection-over-union for two intervals"""
+        lower_bounds = [interval_b[0]]
+        upper_bounds = [interval_b[1]]
+        if not interval_a[0] <= interval_b[0] <= interval_a[1]:
+            lower_bounds.append(interval_a[0])
+        if not interval_a[0] <= interval_b[1] <= interval_a[1]:
+            upper_bounds.append(interval_a[1])
+        intersection = min(upper_bounds) - max(lower_bounds)
+        union = max(upper_bounds) - min(lower_bounds)
+        iou = intersection / union
+        return iou
 
+    @staticmethod
+    def low_level_conclusion_distance(rule_a: Rule, rule_b: Rule) -> float:
+        """Distance metric that defines how equal two conclusions are"""
+        def v2v_distance(a: float, b: float) -> float:
+            """Relative distance between two values"""
+            a = abs(a)
+            b = abs(b)
+            # arithmetic mean change see https://en.wikipedia.org/wiki/Relative_change_and_difference, behaves analogously to what we defined so far
+            # return (max(a, b)-min(a, b))/((a+b)/2)
+            return 1 - min(a, b) / max(a, b)
+
+        def v2r_distance(v: float, r: Tuple[float, float]) -> float:
+            """Relative distance between a value and a range"""
+            if r[0] <= v <= r[0]:
+                return 0
+            return min(v2v_distance(v, r[0]), v2v_distance(v, r[1]))
+
+        if rule_a.relative_mean_value not in [0, None] and \
+                rule_b.relative_mean_value not in [0, None]:
+            return v2v_distance(rule_a.relative_mean_value, rule_b.relative_mean_value)
+        elif rule_a.parameter_range is not None and rule_b.parameter_range is not None:
+            groundtruth_set = math.isclose(*rule_a.parameter_range)
+            prediction_set = math.isclose(*rule_b.parameter_range)
+            if groundtruth_set and prediction_set:
+                return v2v_distance(rule_a.parameter_range[0], rule_b.parameter_range[0])
+            elif any([groundtruth_set, prediction_set]):
+                value = rule_a.parameter_range[0] if groundtruth_set else rule_b.parameter_range[0]
+                interval = rule_a.parameter_range if not groundtruth_set else rule_b.parameter_range
+                return v2r_distance(value, interval)
             else:
-                parsed_condition, parsed_condition_lower, parsed_condition_upper, parsed_action, parsed_parameter, parsed_range_start, parsed_range_end = result
+                return Rule.bounded_intersection_over_union(
+                    rule_a.parameter_range, rule_b.parameter_range)
+
+        return 0 if rule_b.action_quantifier is not None \
+            and rule_b.action_quantifier == rule_a.action_quantifier \
+            else 1
+
+    @staticmethod
+    @abstractmethod
+    def from_string(string: str, label_encoder: LabelEncoderForColumns) -> Rule:
+        """Parses a string representation of a rule into a `Rule` object"""
+        raise NotImplementedError(
+            'from_string must be called from a inherited class and not from Rule itself'
+        )
+
+    @staticmethod
+    def parse_conclusion_string(
+        string: str,
+        label_encoder: LabelEncoderForColumns
+    ) -> Dict[str, Any]:
+        """Parses the conclusion part of a rule string into its information"""
+        result_incrementally = parse.parse(
+            "try to {} the parameter {} by {}", string)
+        result_range = parse.parse(
+            "try to {} the parameter {} in range {} to {}", string)
+        result_set = parse.parse("try to {} the parameter {} to {}", string)
+
+        if result_incrementally is not None:
+            parsed_action, parsed_parameter, parsed_step = result_incrementally
+            categorical_rule, range_rule = False, False
+        elif result_range is not None:
+            parsed_action, parsed_parameter, parsed_range_start, parsed_range_end = result_range
+            categorical_rule, range_rule = False, True
+        elif result_set is not None:
+            parsed_action, parsed_parameter, parsed_step = result_set
+            categorical_rule, range_rule = True, False
         else:
-            parsed_condition, parsed_condition_lower, parsed_condition_upper, parsed_action, parsed_parameter, parsed_step = result
+            raise ValueError(f'Invalid conclusion string: {string}')
+
+        rule_args = {
+            "parameter": parsed_parameter,
+            "label_encoder": label_encoder,
+            "parameter_range": None,
+            "absolute_mean_value": None,
+            "relative_mean_value": None,
+            "action_quantifier": None
+        }
 
         try:
-            rule.condition = parsed_condition
-            rule.condition_range = (
-                float(parsed_condition_lower), float(parsed_condition_upper))
-
-            try:
-                rule.action = Rule.Action.from_string(parsed_action)
-            except KeyError as e:
-                raise KeyError(
-                    'parsing failed - not a validly formatted rule: ' + str(e))
-            rule.parameter = parsed_parameter
-            if range_rule is False:
-                if categorical_rule is True:
+            rule_args["action"] = Rule.Action.from_string(parsed_action)
+            if categorical_rule:
+                try:
+                    param_value = float(parsed_step)
+                    rule_args["parameter_type"] = Rule.ParamType.NUMERICAL
+                    rule_args["parameter_range"] = (param_value, param_value)
+                except ValueError:
                     try:
-                        # check whether it's a pseudo categorical rule (happens if there is no intervall but all values are the same)
-                        param_value = float(parsed_step)
-                        rule.parameter_type = Rule.ParamType.NUMERICAL
-                        rule.range_start = param_value
-                        rule.range_end = param_value
+                        # check if its a bool or string
+                        rule_args["action_quantifier"] = util.strtobool(
+                            parsed_step)
+                        rule_args["parameter_type"] = Rule.ParamType.BOOLEAN
                     except ValueError:
-                        try:
-                            # check if its a bool or string
-                            rule.action_quantifier = util.strtobool(
-                                parsed_step)
-                            rule.parameter_type = Rule.ParamType.BOOLEAN
-                        except ValueError:
-                            rule.action_quantifier = label_encoder.transform(
-                                parsed_step, rule.parameter)
-                            rule.parameter_type = Rule.ParamType.STRING
-                else:
-                    rule.parameter_type = Rule.ParamType.NUMERICAL
-                    if rule.action == Rule.Action.DECREASE_INCREMENTALLY:
-                        rule.step_size = -1 * float(parsed_step)
-                    else:
-                        rule.step_size = float(parsed_step)
+                        rule_args["action_quantifier"] = label_encoder.transform(
+                            parsed_step, parsed_parameter)
+                        rule_args["parameter_type"] = Rule.ParamType.STRING
+            elif range_rule:
+                rule_args["parameter_type"] = Rule.ParamType.NUMERICAL
+                rule_args["parameter_range"] = (
+                    float(parsed_range_start), float(parsed_range_end))
             else:
-                rule.parameter_type = Rule.ParamType.NUMERICAL
-                rule.range_start = float(parsed_range_start)
-                rule.range_end = float(parsed_range_end)
+                rule_args["parameter_type"] = Rule.ParamType.NUMERICAL
+                if rule_args["action"] == Rule.Action.DECREASE_INCREMENTALLY:
+                    rule_args["relative_mean_value"] = -1 * float(parsed_step)
+                else:
+                    rule_args["relative_mean_value"] = float(parsed_step)
+        except Exception as exception:
+            raise ValueError(
+                f'not a valid conclusion: {string}') from exception
 
-        except Exception as e:
-            raise ValueError(f'not a valid rule: {string} - {e}')
-        return rule
+        return rule_args
 
     @classmethod
-    def from_relation(cls,
-                      parameter_key: str,
-                      influence_key: str,
-                      parameter_type: Rule.ParamType | None,
-                      param_values: pd.Series,
-                      relative_param_values: pd.Series | None,
-                      influence_bin: tuple[float, float] | None,
-                      label_encoder: LabelEncoderForColumns,
-                      averaging_function=np.nanmean) -> Rule:
+    def from_relation(
+        cls,
+        parameter: str,
+        condition: str,
+        parameter_type: Rule.ParamType,
+        param_values: pd.Series,
+        relative_param_values: pd.Series | None,
+        label_encoder: LabelEncoderForColumns,
+        averaging_function=np.nanmean,
+        **kwargs
+    ) -> Rule:
         """
-        create rule from Knowledge Graph relation, condition and parameter type
+        Creates a rule from a Knowledge Graph relation, condition and parameter type
 
         Args:
-            parameter_key (str): name of the cura parameter
+            parameter (str): name of the cura parameter
             influence_key (str): name of the influence condition
             parameter_type (Rule.ParamType | None): type of the parameter (numerical/boolean/string)
             param_values (pd.Series): List of absolute values of parameters for experiments
             relative_param_values (pd.Series | None): List of relative values of parameters for experiments
-            influence_bin (tuple[float, float] | None): tuple of lower, upper bin edges in which the influence value resides
             label_encoder (LabelEncoderForColumns): label encoder
+            kwargs: Other arguments that should be passed to the constructor of the new rule
 
         Returns:
             Rule: new Rule object describing the KG Relation
         """
 
-        rule = cls(label_encoder)
-        rule.parameter = parameter_key
-        rule.condition = influence_key
-        rule.parameter_type = parameter_type
+        if cls == Rule:
+            raise NotImplementedError(
+                'from_relation must be called from a inherited class and not from Rule itself'
+            )
 
-        mean_param_values = averaging_function(param_values)
-        mean_relative_param_values = averaging_function(
-            relative_param_values) if relative_param_values is not None else 0
+        rule_args = {
+            "parameter": parameter,
+            "parameter_type": parameter_type,
+            "condition": condition,
+            "label_encoder": label_encoder,
+            "absolute_mean_value": averaging_function(param_values),
+            "parameter_range": None,
+            "relative_mean_value": None,
+            "action_quantifier": None
+        }
 
-        rule.mean_value = mean_param_values
-        if rule.parameter_type == Rule.ParamType.NUMERICAL:
-            param_std = np.std(param_values)
-            rule.range_start = mean_param_values - param_std
-            rule.range_end = mean_param_values + param_std
-            rule.mean_value = mean_param_values
-            rule.step_size = mean_relative_param_values
-            rule.set_action()
-        elif rule.parameter_type == Rule.ParamType.BOOLEAN:
-            rule.action = Rule.Action.SET
+        if parameter_type == Rule.ParamType.NUMERICAL:
+            p_std = np.std(param_values)
+            rule_args['parameter_range'] = (
+                rule_args['absolute_mean_value'] - p_std, rule_args['absolute_mean_value'] + p_std)
+            rule_args['relative_mean_value'] = averaging_function(
+                relative_param_values) if relative_param_values is not None else 0
+        elif parameter_type == Rule.ParamType.BOOLEAN:
+            rule_args['action'] = Rule.Action.SET
             # TODO XAI-558 this might be overly simplistic. In case of categorical values maybe it makes sense to take the previous value into consideration as a separate condition? In case of bools changed_parameters contains a propper difference
-            if mean_param_values >= 0.5:
-                rule.action_quantifier = True
+            if rule_args['absolute_mean_value'] >= 0.5:
+                rule_args['action_quantifier'] = True
             else:
-                rule.action_quantifier = False
-        elif rule.parameter_type == Rule.ParamType.STRING:
-            rule.action = Rule.Action.SET
+                rule_args['action_quantifier'] = False
+        elif parameter_type == Rule.ParamType.STRING:
+            rule_args['action'] = Rule.Action.SET
             # TODO XAI-558 this might be overly simplistic. In case of categorical values maybe it makes sense to take the previous value into consideration as a separate condition?
             # Note that changing it here also requires a change in merge_rules
             # simply keep the value that is occurring most often
@@ -244,132 +414,87 @@ class Rule:
                 np.around(param_values), return_counts=True)
             ind = np.argmax(counts)
             try:
-                rule.action_quantifier = values[ind]
+                rule_args['action_quantifier'] = values[ind]
             except IndexError:
-                rule.action_quantifier = None
+                pass
         else:
             raise ValueError(
-                f'Unknown parameter_type {rule.parameter_type} encountered.')
+                f'Unknown parameter_type {parameter_type} encountered.')
 
-        if influence_bin is not None:
-            lower_bin_edge, upper_bin_edge = influence_bin
-            rule.condition_range = (lower_bin_edge, upper_bin_edge)
-
-        return rule
-
-    @staticmethod
-    def highlevel_eq(baseline_rule: Rule, prediction_rule: Rule) -> bool:
-        if baseline_rule.parameter == prediction_rule.parameter and baseline_rule.condition == prediction_rule.condition:
-            return True
-        return False
-
-    @staticmethod
-    def midlevel_eq(baseline_rule: Rule, prediction_rule: Rule) -> bool:
-        if Rule.highlevel_eq(baseline_rule, prediction_rule):
-            if baseline_rule.action == prediction_rule.action:
-                return True
-        return False
+        return cls(**rule_args, **kwargs)
 
     @classmethod
-    def lowlevel_eq(cls, baseline_rule: Rule, prediction_rule: Rule, verbose=False) -> bool:
-
-        if Rule.midlevel_eq(baseline_rule, prediction_rule):
-            if prediction_rule.is_low_level_comparable() is True and baseline_rule.is_low_level_comparable():
-                iou = Rule.condition_range_iou(baseline_rule, prediction_rule)
-                if np.isnan(iou) or iou > cls.CONDITION_THRESHOLD:
-                    # TODO XAI-558 add case for range_start == range_end
-                    if prediction_rule.mean_value:
-                        if baseline_rule.range_end > prediction_rule.mean_value > baseline_rule.range_start:
-                            return True
-                    if baseline_rule.mean_value:
-                        if prediction_rule.range_end > baseline_rule.mean_value > prediction_rule.range_start:
-                            return True
-                        # TODO XAI-558 use None instead of 0
-                    if prediction_rule.step_size != 0 and baseline_rule.step_size != 0:
-                        if math.isclose(baseline_rule.step_size, prediction_rule.step_size, rel_tol=cls.PREDICTION_THRESHOLD) is True:
-                            return True
-                    if prediction_rule.action_quantifier is not None and prediction_rule.action_quantifier == baseline_rule.action_quantifier:
-                        return True
-                if verbose:
-                    print(f'{prediction_rule} is not equal {baseline_rule}')
-        return False
-
-    @staticmethod
-    def condition_range_iou(rule_a: Rule, rule_b: Rule) -> float:
-        lower_bounds = [rule_a.condition_range[0], rule_b.condition_range[0]]
-        upper_bounds = [rule_a.condition_range[1], rule_b.condition_range[1]]
-        intersection = min(upper_bounds) - max(lower_bounds)
-        union = max(upper_bounds) - min(lower_bounds)
-        iou = intersection / union
-        return iou
-
-    # TODO XAI-636 may be unset as long as action is publicly accessible
-    def set_action(self) -> None:
+    def merge_rules(
+        cls,
+        rules: List[Rule],
+        label_encoder: LabelEncoderForColumns,
+        averaging_function=np.nanmean,
+        **kwargs
+    ) -> Rule:
         """
-        Sets the rule action based on values of step_size and ranges
-        :return:
+        Merge a list of rules pertaining to the same
+        condition-parameterpair by averaging their values
         """
-        if self.step_size > 0:
-            self.action = Rule.Action.INCREASE_INCREMENTALLY
-        elif self.step_size < 0:
-            self.action = Rule.Action.DECREASE_INCREMENTALLY
-        else:
-            if math.isclose(self.range_start, self.range_end):
-                self.action = Rule.Action.SET
-            elif self.action_quantifier is not None:
-                self.action = Rule.Action.SET
-            else:
-                self.action = Rule.Action.ADJUST_INCREMENTALLY
 
-    @staticmethod
-    def merge_rules(rules: list[Rule], label_encoder: LabelEncoderForColumns, averaging_function=np.nanmean) -> Rule:
-        """merge a list of rules pertaining to the same condition-parameter pair by averaging their values"""
+        if cls == Rule:
+            raise NotImplementedError(
+                'merge_rules must be called from a inherited class and not from Rule itself'
+            )
+
         if len(rules) == 1:
             return rules[0]
-        else:
-            range_starts, range_ends, means, step_sizes, quantifiers = [], [], [], [], []
-            condition_range_starts, condition_range_ends = [], []
-            for rule in rules:
-                range_starts.append(rule.range_start)
-                range_ends.append(rule.range_end)
-                condition_range_starts.append(rule.condition_range[0])
-                condition_range_ends.append(rule.condition_range[1])
-                means.append(rule.mean_value)
-                if rule.step_size is not None:
-                    step_sizes.append(rule.step_size)
-                if rule.action_quantifier is not None:
-                    quantifiers.append(rule.action_quantifier)
 
-            merged_rule = Rule(label_encoder)
-            merged_rule.parameter = rules[0].parameter
-            merged_rule.condition = rules[0].condition
-            merged_rule.condition_range = (averaging_function(
-                condition_range_starts), averaging_function(condition_range_ends))
-            merged_rule.parameter_type = rules[0].parameter_type
+        assert len({r.parameter for r in rules}
+                   ) == 1, 'All rules must have the same parameter'
+        assert len({r.condition for r in rules}
+                   ) == 1, 'All rules must have the same condition'
 
-            if merged_rule.parameter_type == Rule.ParamType.BOOLEAN:
-                # special treatment for bools - if the mean is greater than 0.5 we treat it as true
-                if averaging_function(quantifiers) >= 0.5:
-                    merged_rule.action_quantifier = True
-                else:
-                    merged_rule.action_quantifier = False
-            elif merged_rule.parameter_type == Rule.ParamType.STRING:
-                # special treatment for encoded strings - we keep the value occuring most often
-                merged_rule.action_quantifier = max(
-                    quantifiers, key=quantifiers.count)
-            elif merged_rule.parameter_type == Rule.ParamType.NUMERICAL:
-                merged_rule.range_start = averaging_function(range_starts)
-                merged_rule.range_end = averaging_function(range_ends)
-                merged_rule.mean_value = averaging_function(means)
-                merged_rule.step_size = averaging_function(step_sizes)
-                merged_rule.quantifiers = averaging_function(quantifiers)
+        rule_args = {
+            "parameter": rules[0].parameter,
+            "parameter_type": rules[0].parameter_type,
+            "condition": rules[0].condition,
+            "label_encoder": label_encoder,
+            "parameter_range": None,
+            "absolute_mean_value": None,
+            "relative_mean_value": None,
+            "action_quantifier": None
+        }
+
+        range_starts, range_ends, abs_means, rel_means, quantifiers = [], [], [], [], []
+        for rule in rules:
+            if rule.parameter_range is not None:
+                range_starts.append(rule.parameter_range[0])
+                range_ends.append(rule.parameter_range[1])
+            if rule.absolute_mean_value is not None:
+                abs_means.append(rule.absolute_mean_value)
+            if rule.relative_mean_value is not None:
+                rel_means.append(rule.relative_mean_value)
+            if rule.action_quantifier is not None:
+                quantifiers.append(rule.action_quantifier)
+
+        # Create merged rule
+        if rule_args['parameter_type'] == Rule.ParamType.BOOLEAN:
+            # special treatment for bools - if the mean is greater than 0.5 we treat it as true
+            if averaging_function(quantifiers) >= 0.5:
+                rule_args["action_quantifier"] = True
             else:
-                raise ValueError(
-                    f"unknown Rule.ParamType {merged_rule.parameter_type} encountered")
+                rule_args["action_quantifier"] = False
+        elif rule_args['parameter_type'] == Rule.ParamType.STRING:
+            # special treatment for encoded strings - we keep the value occuring most often
+            rule_args["action_quantifier"] = max(
+                quantifiers, key=quantifiers.count)
+        elif rule_args['parameter_type'] == Rule.ParamType.NUMERICAL:
+            if len(range_starts) > 0:
+                rule_args["parameter_range"] = (averaging_function(range_starts),
+                                                averaging_function(range_ends))
+            if len(abs_means) > 0:
+                rule_args["absolute_mean_value"] = averaging_function(
+                    abs_means)
+            if len(rel_means) > 0:
+                rule_args["relative_mean_value"] = averaging_function(
+                    rel_means)
+        else:
+            raise ValueError(
+                f"unknown Rule.ParamType {rule_args['parameter_type']} encountered")
 
-            merged_rule.set_action()
-            return merged_rule
-
-    @property
-    def label_encoder(self):
-        return self._label_encoder
+        return cls(**rule_args, **kwargs)

@@ -29,43 +29,69 @@ class QP_super(ABC):
         self._relations = args.pq_relations
         self._rng = rng(self._config.seed)
 
-    def generalized_generate_knowledge_graph(self, with_shortcut: bool) -> Graph:
-        
+    def generalized_generate_knowledge_graph(
+        self,
+        with_shortcut: bool,
+        flip_quantified_by: bool = False,
+        additional_flipped_quantified_by: bool = False
+    ) -> Graph:
+        """
+        Creates a knowledge graph
+
+        Parameters:
+            - `with_shortcut`: Whether to include a direct relation between quality and parameter
+            - `flip_quantified_by`: Whether to flip the relation between the parameter and its
+            quantification to be a 'quantifies' instead of a 'quantified by' relation
+            - `additional_flipped_quantified_by`: Whether to include a 'quantifies' relation between
+            the parameter and its quantification in addition to the 'quantified by' relation
+
+        Returns:
+            Created knowledge graph using the specified configurations
+        """
+        if flip_quantified_by and additional_flipped_quantified_by:
+            raise ValueError('Only flip_quantified_by or additional_flipped_quantified_by can be set to True, not both!')
+
         knowledge_graph = Graph(directed=True)
 
         num_included = int(len(self._relations) * self._config.knowledge_share)
-        pq_tuples_included: List[PQ_Relation] = self._rng.choice(
+        pq_relations_included: List[PQ_Relation] = self._rng.choice(
             a=self._relations, size=num_included, replace=False
         )
 
-        for pq_tuple in pq_tuples_included:
-            added = add_vertex_to_graph(knowledge_graph, pq_tuple.quality)
+        for pq_relation in pq_relations_included:
+            added = add_vertex_to_graph(knowledge_graph, pq_relation.quality)
             added["type"] = "qual_influence"
 
-            added = add_vertex_to_graph(knowledge_graph, pq_tuple.parameter)
+            added = add_vertex_to_graph(knowledge_graph, pq_relation.parameter)
             added["type"] = "parameter"
-        
-            parameter = pq_tuple.parameter
-            quality = pq_tuple.quality
 
-            edge_weight= pq_tuple.conclusion_quantifications
-            
-            quant = add_vertex_to_graph(knowledge_graph,edge_weight)
+            parameter = pq_relation.parameter
+            quality = pq_relation.quality
+
+            edge_weight = pq_relation.conclusion_quantification_mean
+
+            quant = add_vertex_to_graph(knowledge_graph, edge_weight)
             quant['type'] = "value"
             quant['literal_value'] = edge_weight
             quant['corresponding_parameter'] = parameter
+            quant["is_relative_value"] = pq_relation.action == PQ_Relation.Action.ADJUST
 
-            added=knowledge_graph.add_edge(quality, quant)
+            added = knowledge_graph.add_edge(quality, quant)
             added["weight"] = "implies"
             added["literal_included"] = "To"
 
-            added=knowledge_graph.add_edge(parameter, quant)
-            added['weight'] = "quantified by"
-            added["literal_included"] = "To"
-            
-            if with_shortcut:            
-                added=knowledge_graph.add_edge(quality,parameter)
-                added['weight'] = pq_tuple.action
+            if flip_quantified_by or additional_flipped_quantified_by:
+                added = knowledge_graph.add_edge(quant, parameter)
+                added['weight'] = f"{pq_relation.quantified_conclusion_prefix} quantifies"
+                added["literal_included"] = "From"
+            if not flip_quantified_by or additional_flipped_quantified_by:
+                added = knowledge_graph.add_edge(parameter, quant)
+                added['weight'] = f"{pq_relation.quantified_conclusion_prefix} quantified by"
+                added["literal_included"] = "To"
+
+            if with_shortcut:
+                added = knowledge_graph.add_edge(quality, parameter)
+                added['weight'] = "implies"
                 added['literal_included'] = 'None'
 
         return knowledge_graph

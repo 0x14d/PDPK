@@ -139,7 +139,7 @@ DEFAULT_PQ_FUNCTION_CONFIG: PQFunctionType = PQFunctionType.LINEAR
 
 
 def parse_pq_function_config(
-    config: Optional[PQFunctionConfig]
+    config: Optional[Union[PQFunctionConfig, str]]
 ) -> AbstractPQFunctionConfig:
     """
     Parses a pq-function configuration to its default format.
@@ -154,6 +154,8 @@ def parse_pq_function_config(
     """
     if config is None:
         config = DEFAULT_PQ_FUNCTION_CONFIG
+    elif isinstance(config, str):
+        config = PQFunctionType(config)
     if isinstance(config, PQFunctionType):
         return config.get_configuration()
     return config

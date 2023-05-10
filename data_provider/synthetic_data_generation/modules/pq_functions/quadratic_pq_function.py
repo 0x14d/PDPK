@@ -6,7 +6,8 @@ This module provides the class `QuadraticPQFunction`
 
 from numbers import Number
 from typing import Callable, Optional, Tuple, Union
-from numpy import isnan, sqrt
+
+from numpy import isnan, sqrt, sign
 from numpy.random import Generator
 from numpy.typing import ArrayLike
 from numpy.polynomial.polynomial import Polynomial
@@ -98,6 +99,10 @@ class QuadraticPQFunction(PQFunction):
 
             return inv_deriv[0]
         self.__inverse_derivation = self._create_function_with_array_handling(inverse_derivation)
+
+    @property
+    def direction(self) -> int:
+        return sign(self._coeffs[2])
 
     def _function(self, param: Union[Number, ArrayLike], **kwargs) -> Union[Number, ArrayLike]:
         return self.__function(param)
